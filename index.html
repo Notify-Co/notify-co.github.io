@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NotifyPicks Pick Tracker</title>
+<title>Notify Pick Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -35,6 +35,13 @@ body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important
   --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
+:root[data-capper="team"] {
+  --bg: #0F1026; --surface: #051C30; --surface-2: #042F40; --chip: #042F40;
+  --ink: #eef6ff; --ink-2: #AFD7FA; --ink-3: #6f9ab8; --line: #1b3954;
+  --accent: #D68FBC; --accent-2: #53A0C4; --nav-bg: rgba(15, 16, 38, .9);
+}
+:root[data-capper="team"] header::after { background: linear-gradient(90deg, #D68FBC, #935D7E 35%, #53A0C4 70%, transparent); }
+:root[data-capper="team"] .chip:not([aria-pressed="true"]) { border-color: color-mix(in srgb, #935D7E 55%, transparent); }
 :root[data-capper="caleb"]   { --accent: #39ff88; --accent-2: #00d1ff; }
 :root[data-capper="sammy"]   { --accent: #ff3b5c; --accent-2: #ff9f1c; }
 :root[data-capper="quentin"] { --accent: #ffd60a; --accent-2: #ff6b00; }
@@ -77,8 +84,9 @@ header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; h
 .tab::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; vertical-align: .12em; background: var(--tab-c); box-shadow: 0 0 8px var(--tab-c); transform: rotate(45deg); }
 .tab:hover { color: var(--tab-c); }
 .tab[aria-selected="true"] { color: var(--tab-c); border-bottom-color: var(--tab-c); text-shadow: 0 0 12px color-mix(in srgb, var(--tab-c) 60%, transparent); }
-.tab.team { padding-left: 0; margin-right: 10px; }
-@media (max-width: 480px) { .tab { font-size: .95rem; padding: 13px 8px 10px; letter-spacing: .03em; } .tab.team { margin-right: 4px; } }
+.tab.team { padding-left: 0; margin-right: 10px; font-size: 1.45rem; letter-spacing: .08em; padding-block: 10px 9px; }
+:root[data-capper="team"] h1 { font-size: clamp(2.9rem, 9vw, 5.2rem); }
+@media (max-width: 480px) { .tab { font-size: .95rem; padding: 13px 8px 10px; letter-spacing: .03em; } .tab.team { margin-right: 4px; font-size: 1.2rem; padding-block: 10px 9px; } }
 .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .filters .lbl { font-family: var(--f-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-right: 4px; }
@@ -92,7 +100,7 @@ header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; h
 .board > div:first-child { border-left: 0; }
 .board .k { font-family: var(--f-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
 .board .v.pos, .board .v.neg { text-shadow: 0 0 22px currentColor; }
-.board .v { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.9rem, 4.5vw, 2.7rem); line-height: 1.05; font-variant-numeric: tabular-nums; }
+.board .v { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.6rem, 4.2vw, 2.5rem); white-space: nowrap; line-height: 1.05; font-variant-numeric: tabular-nums; }
 .board .sub { font-size: .82rem; color: var(--ink-2); }
 @media (max-width: 720px) {
   .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -136,6 +144,20 @@ td.play { white-space: normal; min-width: 200px; }
 .res.L { background: color-mix(in srgb, var(--loss) 14%, transparent); color: var(--loss); border: 1px solid color-mix(in srgb, var(--loss) 40%, transparent); }
 .res.P { background: var(--chip); color: var(--ink-2); }
 .more { justify-self: center; font: 600 .9rem var(--f-display); text-transform: uppercase; letter-spacing: .08em; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 8px 18px; cursor: pointer; }
+.filters + .filters { margin-top: -26px; }
+.range { display: grid; gap: 6px; padding: 4px 0 6px; }
+.range-row { display: flex; justify-content: space-between; gap: 8px; font: .76rem var(--f-mono); color: var(--ink-2); }
+.range-row b { color: var(--ink); font-weight: 500; }
+.dual { position: relative; height: 22px; }
+.dual .track { position: absolute; left: 0; right: 0; top: 9px; height: 4px; background: var(--chip); border-radius: 2px; }
+.dual .fill { position: absolute; top: 9px; height: 4px; background: var(--accent); box-shadow: var(--glow); border-radius: 2px; }
+.dual input { position: absolute; inset: 0; width: 100%; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; height: 22px; }
+.dual input::-webkit-slider-runnable-track { background: none; height: 22px; }
+.dual input::-moz-range-track { background: none; }
+.dual input::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 16px; height: 16px; margin-top: 3px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--accent); box-shadow: var(--glow); cursor: grab; }
+.dual input::-moz-range-thumb { pointer-events: auto; width: 12px; height: 12px; border-radius: 50%; background: var(--surface-2); border: 2px solid var(--accent); cursor: grab; }
+.range .reset { justify-self: end; font: 500 .72rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
+.empty { padding: 40px 0; text-align: center; color: var(--ink-3); font-size: .9rem; }
 footer { border-top: 1px solid var(--line); padding-top: 14px; font-size: .8rem; color: var(--ink-3); display: grid; gap: 4px; }
 </style>
 
@@ -147,15 +169,16 @@ footer { border-top: 1px solid var(--line); padding-top: 14px; font-size: .8rem;
 </nav>
 <div class="wrap">
   <header>
-    <span class="eyebrow" id="eyebrow">NotifyPicks · Verified results</span>
+    <span class="eyebrow" id="eyebrow">Notify · Verified results</span>
     <div class="head-row">
-      <h1 id="title">NotifyPicks</h1>
+      <h1 id="title">Notify</h1>
       <div class="stamp"><span class="dot" id="srcDot"></span><span id="srcText">Loading picks…</span></div>
     </div>
     <p class="muted" id="blurb" style="margin:0;max-width:62ch">Every pick we've sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play.</p>
   </header>
 
   <div class="filters" id="sportFilters" role="group" aria-label="Filter by sport"></div>
+  <div class="filters" id="dateFilters" role="group" aria-label="Filter by date"></div>
 
   <div class="board" id="board" aria-live="polite"></div>
 
@@ -173,6 +196,13 @@ footer { border-top: 1px solid var(--line); padding-top: 14px; font-size: .8rem;
     <div class="card">
       <h3>Running total, units</h3>
       <div class="chart" id="cumChart"></div>
+      <div class="range" id="cumRange" hidden>
+        <div class="range-row"><span id="rangeFrom"></span><span id="rangeNet"></span><span id="rangeTo"></span></div>
+        <div class="dual"><div class="track"></div><div class="fill" id="rangeFill"></div>
+          <input type="range" id="rangeA" min="0" value="0" step="1" aria-label="Start date">
+          <input type="range" id="rangeB" min="0" value="0" step="1" aria-label="End date"></div>
+        <button class="reset" id="rangeReset" type="button" hidden>Reset range</button>
+      </div>
     </div>
     <div class="card">
       <h3>Units by month</h3>
@@ -282,9 +312,9 @@ function niceTicks(min, max, count) {
 }
 
 /* ---------- State ---------- */
-let ALL = [], sport = "All", capper = "All", shown = 25;
+let ALL = [], sport = "All", capper = "All", shown = 25, period = "all", cumSel = null;
 const TEAM = "All";
-const TAB_COLORS = { team: "#22e6ff", caleb: "#39ff88", sammy: "#ff3b5c", quentin: "#ffd60a", footy: "#d65bff" };
+const TAB_COLORS = { team: "#D68FBC", caleb: "#39ff88", sammy: "#ff3b5c", quentin: "#ffd60a", footy: "#d65bff" };
 const slug = c => c.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 function capperFromHash() {
   const h = decodeURIComponent(location.hash.slice(1)).toLowerCase();
@@ -294,29 +324,41 @@ function capperFromHash() {
 function renderTabs() {
   const items = [TEAM, ...SOURCES.map(s => s.capper)];
   const box = document.getElementById("tabs");
-  box.innerHTML = items.map(c => `<a class="tab${c === TEAM ? " team" : ""}" style="--tab-c:${TAB_COLORS[c === TEAM ? "team" : slug(c)] || "var(--accent)"}" role="tab" href="#${c === TEAM ? "team" : slug(c)}" aria-selected="${c === capper}">${c === TEAM ? "NotifyPicks" : esc(c)}</a>`).join("");
+  box.innerHTML = items.map(c => `<a class="tab${c === TEAM ? " team" : ""}" style="--tab-c:${TAB_COLORS[c === TEAM ? "team" : slug(c)] || "var(--accent)"}" role="tab" href="#${c === TEAM ? "team" : slug(c)}" aria-selected="${c === capper}">${c === TEAM ? "Notify" : esc(c)}</a>`).join("");
 }
 function renderHeader() {
   const team = capper === TEAM;
-  if (team) document.documentElement.removeAttribute("data-capper"); else document.documentElement.setAttribute("data-capper", slug(capper));
-  document.getElementById("title").textContent = team ? "NotifyPicks" : capper;
-  document.getElementById("eyebrow").textContent = team ? `Team results · ${SOURCES.map(s => s.capper).join(", ")}` : "NotifyPicks capper · Personal results";
+  document.documentElement.setAttribute("data-capper", team ? "team" : slug(capper));
+  document.getElementById("title").textContent = team ? "Notify" : capper;
+  document.getElementById("eyebrow").textContent = team ? `Notify team results · ${SOURCES.map(s => s.capper).join(", ")}` : "Notify capper · Personal results";
   document.getElementById("blurb").textContent = team
     ? "Every pick the team has sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play."
     : `Every pick ${capper} has sent, graded. Units are a standard stake size, so results compare fairly no matter how much you bet per play.`;
-  document.title = team ? "NotifyPicks Pick Tracker" : `${capper} · NotifyPicks Pick Tracker`;
+  document.title = team ? "Notify Pick Tracker" : `${capper} · Notify Pick Tracker`;
 }
-addEventListener("hashchange", () => { capper = capperFromHash(); sport = "All"; shown = 25; renderAll(); setSource(isLive); window.scrollTo({ top: 0 }); });
+addEventListener("hashchange", () => { capper = capperFromHash(); sport = "All"; shown = 25; cumSel = null; renderAll(); setSource(isLive); window.scrollTo({ top: 0 }); });
 const byCapper = () => capper === "All" ? ALL : ALL.filter(r => r.capper === capper);
 const bySport = () => sport === "All" ? ALL : ALL.filter(r => r.sport === sport);
-const view = () => byCapper().filter(r => sport === "All" || r.sport === sport);
+// Date presets count back from today, so "Last 2 weeks" always means the 14 days up to now.
+const PERIODS = [["all", "All time", 0], ["14d", "Last 2 weeks", 14], ["30d", "Last 30 days", 30], ["1y", "Last year", 365]];
+const sinceISO = () => {
+  const days = (PERIODS.find(p => p[0] === period) || PERIODS[0])[2];
+  if (!days) return "";
+  const d = new Date(); d.setDate(d.getDate() - days + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const inPeriod = rs => { const s = sinceISO(); return s ? rs.filter(r => r.date >= s) : rs; };
+const view = () => inPeriod(byCapper().filter(r => sport === "All" || r.sport === sport));
 
 function renderFilters() {
   const sports = [...new Set(byCapper().map(r => r.sport))].sort();
   if (sport !== "All" && !sports.includes(sport)) sport = "All";
   const box = document.getElementById("sportFilters");
   box.innerHTML = '<span class="lbl">Sport</span>' + ["All", ...sports].map(s => `<button class="chip" type="button" aria-pressed="${s === sport}" data-s="${esc(s)}">${s === "All" ? "All sports" : esc(SPORT_NAMES[s] || s)}</button>`).join("");
-  box.querySelectorAll(".chip").forEach(b => b.onclick = () => { sport = b.dataset.s; shown = 25; renderAll(); });
+  box.querySelectorAll(".chip").forEach(b => b.onclick = () => { sport = b.dataset.s; shown = 25; cumSel = null; renderAll(); });
+  const dbox = document.getElementById("dateFilters");
+  dbox.innerHTML = '<span class="lbl">Date</span>' + PERIODS.map(([k, label]) => `<button class="chip" type="button" aria-pressed="${k === period}" data-p="${k}">${label}</button>`).join("");
+  dbox.querySelectorAll(".chip").forEach(b => b.onclick = () => { period = b.dataset.p; shown = 25; cumSel = null; renderAll(); });
 }
 function renderBoard(rows) {
   const a = agg(rows);
@@ -356,12 +398,21 @@ function showTip(host, tip, svg, x, y, W, html) {
 function renderCum(rows) {
   const host = document.getElementById("cumChart");
   const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date));
-  const days = []; let run = 0;
-  sorted.forEach(r => { run += r.net; const last = days[days.length - 1]; if (last && last.date === r.date) last.v = run; else days.push({ date: r.date, v: run }); });
+  const allDays = []; let total = 0;
+  sorted.forEach(r => { total += r.net; const last = allDays[allDays.length - 1]; if (last && last.date === r.date) last.v = total; else allDays.push({ date: r.date, v: total }); });
+  const rangeBox = document.getElementById("cumRange");
+  rangeBox.hidden = allDays.length < 2;
+  if (!allDays.length) { host.innerHTML = '<div class="empty">No picks in this date range</div>'; return; }
+  // The slider picks a window of pick days; the line restarts at 0 so it shows units won inside that window.
+  const n = allDays.length - 1;
+  let [a, b] = cumSel || [0, n]; a = Math.max(0, Math.min(a, n)); b = Math.max(a, Math.min(b, n));
+  const base = a ? allDays[a - 1].v : 0;
+  const days = allDays.slice(a, b + 1).map(d => ({ date: d.date, v: d.v - base }));
+  const run = days[days.length - 1].v;
+  renderRange(allDays, a, b, run);
   const W = 480, H = 260, m = { t: 14, r: 16, b: 28, l: 46 };
   const { svg, tip, iw, ih } = chartFrame(host, W, H, m);
-  svg.setAttribute("aria-label", `Running total of units, ending at ${fmtU(run)}`);
-  if (!days.length) return;
+  svg.setAttribute("aria-label", `Running total of units from ${fmtDate(days[0].date)} to ${fmtDate(days[days.length - 1].date)}, ending at ${fmtU(run)}`);
   const lo = Math.min(0, ...days.map(d => d.v)), hi = Math.max(0, ...days.map(d => d.v));
   const ticks = niceTicks(lo, hi, 4); const y0 = ticks[0], y1 = ticks[ticks.length - 1];
   const X = i => m.l + (days.length === 1 ? iw / 2 : i / (days.length - 1) * iw), Y = v => m.t + ih - (v - y0) / (y1 - y0) * ih;
@@ -390,6 +441,27 @@ function renderCum(rows) {
   hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); });
 }
 
+function renderRange(allDays, a, b, run) {
+  const n = allDays.length - 1, A = document.getElementById("rangeA"), B = document.getElementById("rangeB");
+  A.max = B.max = n; A.value = a; B.value = b;
+  const pct = i => n ? i / n * 100 : 0;
+  Object.assign(document.getElementById("rangeFill").style, { left: pct(a) + "%", width: (pct(b) - pct(a)) + "%" });
+  document.getElementById("rangeFrom").innerHTML = `From <b>${fmtDate(allDays[a].date)}</b>`;
+  document.getElementById("rangeTo").innerHTML = `to <b>${fmtDate(allDays[b].date)}</b>`;
+  const net = document.getElementById("rangeNet"); net.textContent = fmtU(run); net.className = cls(run);
+  document.getElementById("rangeReset").hidden = a === 0 && b === n;
+}
+function setupRange() {
+  const A = document.getElementById("rangeA"), B = document.getElementById("rangeB");
+  const update = moved => {
+    let a = +A.value, b = +B.value;
+    if (a > b) { if (moved === A) a = b; else b = a; }
+    cumSel = [a, b]; renderCum(view());
+  };
+  A.addEventListener("input", () => update(A)); B.addEventListener("input", () => update(B));
+  document.getElementById("rangeReset").onclick = () => { cumSel = null; renderCum(view()); };
+}
+
 function renderMonths(rows) {
   const host = document.getElementById("monthChart");
   const map = {}; rows.forEach(r => { const k = r.date.slice(0, 7); (map[k] = map[k] || []).push(r); });
@@ -397,7 +469,7 @@ function renderMonths(rows) {
   const W = 480, H = 236, m = { t: 14, r: 8, b: 28, l: 46 };
   const { svg, tip, iw, ih } = chartFrame(host, W, H, m);
   svg.setAttribute("aria-label", "Net units by month");
-  if (!list.length) return;
+  if (!list.length) { host.innerHTML = '<div class="empty">No picks in this date range</div>'; return; }
   document.getElementById("downLeg").hidden = !list.some(d => d.net < 0);
   const lo = Math.min(0, ...list.map(d => d.net)), hi = Math.max(0, ...list.map(d => d.net));
   const ticks = niceTicks(lo, hi, 4); const y0 = ticks[0], y1 = ticks[ticks.length - 1];
@@ -440,10 +512,10 @@ function renderLog(rows) {
 function renderAll() {
   const rows = view();
   renderTabs(); renderHeader(); renderFilters(); renderBoard(rows);
-  groupTable("sportTable", byCapper(), "sport", "Sport", SPORT_NAMES);
+  groupTable("sportTable", inPeriod(byCapper()), "sport", "Sport", SPORT_NAMES);
   const multi = capper === TEAM && new Set(ALL.map(r => r.capper)).size > 1;
   document.getElementById("capperSec").hidden = !multi;
-  if (multi) groupTable("capperTable", bySport(), "capper", "Capper");
+  if (multi) groupTable("capperTable", inPeriod(bySport()), "capper", "Capper");
   renderCum(rows); renderMonths(rows);
   const tagged = rows.filter(r => r.plat);
   document.getElementById("platSec").hidden = !tagged.length;
@@ -466,7 +538,7 @@ function setSource(live) {
 }
 
 capper = capperFromHash();
-ALL = fromSnapshot(); setupLog(); renderAll(); setSource(false);
+ALL = fromSnapshot(); setupLog(); setupRange(); renderAll(); setSource(false);
 loadLive().then(rows => { ALL = rows; setupLog(); renderAll(); setSource(true); }).catch(() => {});
 </script>
 
