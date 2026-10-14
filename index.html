@@ -40,6 +40,8 @@ body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important
   --ink: #eef6ff; --ink-2: #AFD7FA; --ink-3: #6f9ab8; --line: #1b3954;
   --accent: #D68FBC; --accent-2: #53A0C4; --nav-bg: rgba(15, 16, 38, .9);
 }
+:root[data-capper="team"] header::after { background: linear-gradient(90deg, #D68FBC, #935D7E 35%, #53A0C4 70%, transparent); }
+:root[data-capper="team"] .chip:not([aria-pressed="true"]) { border-color: color-mix(in srgb, #935D7E 55%, transparent); }
 :root[data-capper="caleb"]   { --accent: #39ff88; --accent-2: #00d1ff; }
 :root[data-capper="sammy"]   { --accent: #ff3b5c; --accent-2: #ff9f1c; }
 :root[data-capper="quentin"] { --accent: #ffd60a; --accent-2: #ff6b00; }
