@@ -78,6 +78,25 @@ h2 { font-size: clamp(1.7rem, 3.6vw, 2.3rem); }
 
 /* Hero header */
 header { display: grid; justify-items: center; text-align: center; gap: 18px; padding: 64px 0 8px; position: relative; isolation: isolate; }
+/* Floating sport logos around the Notify title (front tab only), tiles from the reference design */
+.sport-float { display: none; position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+:root[data-capper="team"] .sport-float { display: block; }
+.lg { position: absolute; display: grid; place-items: center; width: 72px; height: 72px; border-radius: 16px; rotate: var(--r, 0deg);
+  background: linear-gradient(135deg, oklch(30% 0.09 270 / .9), oklch(16% 0.05 265 / .92)); border: 1px solid oklch(80% 0.1 270 / .45);
+  box-shadow: inset 0 1px 0 oklch(100% 0 0 / .15), 0 0 20px oklch(60% 0.2 280 / .45), 0 16px 32px oklch(0% 0 0 / .5);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  animation: lgFloat 8s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.lg img { display: block; width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 0 6px oklch(100% 0 0 / .18)); }
+.lg--sm { width: 62px; height: 62px; border-radius: 14px; }
+.lg--sm img { width: 40px; height: 40px; }
+@keyframes lgFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+@media (max-width: 760px) {
+  :root[data-capper="team"] header { padding-top: 104px; }
+  .lg, .lg--sm { width: 44px; height: 44px; border-radius: 11px; }
+  .lg img, .lg--sm img { width: 30px; height: 30px; }
+  .lg[data-m] { left: var(--mx) !important; right: auto !important; top: var(--my) !important; }
+}
+@media (prefers-reduced-motion: reduce) { .lg { animation: none; } }
 header::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 30px; width: min(760px, 120%); height: 380px; translate: -50% 0; border-radius: 50%;
   border: 1px solid oklch(72% 0.12 255 / .16); rotate: -6deg; pointer-events: none; }
 header::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 70px; width: min(980px, 140%); height: 300px; translate: -50% 0; border-radius: 50%;
@@ -258,6 +277,15 @@ footer p { margin: 0; max-width: 60ch; }
 </nav>
 <div class="wrap">
   <header>
+    <div class="sport-float" aria-hidden="true">
+      <span class="lg" data-m style="left: 4%; top: 10%; --r: -6deg; --d: -1s; --mx: 4%; --my: 14px"><img src="logos/nfl.png" alt="" width="40" height="40" loading="lazy"></span>
+      <span class="lg lg--sm" data-m style="left: 15%; top: 42%; --r: 5deg; --d: -3.5s; --mx: 18%; --my: 40px"><img src="logos/mlb.png" alt="" width="40" height="40" loading="lazy"></span>
+      <span class="lg" data-m style="left: 3%; top: 70%; --r: -3deg; --d: -5.5s; --mx: 32%; --my: 10px"><img src="logos/dfs.png" alt="" width="40" height="40" loading="lazy"></span>
+      <span class="lg lg--sm" data-m style="left: 14%; top: 88%; --r: 4deg; --d: -2.2s; --mx: 46%; --my: 34px"><img src="logos/unrivaled.png" alt="" width="40" height="40" loading="lazy"></span>
+      <span class="lg" data-m style="right: 5%; top: 8%; --r: 6deg; --d: -4.4s; --mx: 60%; --my: 8px"><img src="logos/nba.png" alt="" width="40" height="40" loading="lazy"></span>
+      <span class="lg lg--sm" data-m style="right: 15%; top: 40%; --r: -5deg; --d: -.6s; --mx: 74%; --my: 38px"><img src="logos/soccer.png" alt="" width="40" height="40" loading="lazy"></span>
+      <span class="lg" data-m style="right: 4%; top: 72%; --r: 3deg; --d: -6.6s; --mx: 86%; --my: 12px"><img src="logos/wnba.png" alt="" width="40" height="40" loading="lazy"></span>
+    </div>
     <span class="eyebrow" id="eyebrow">Notify · Verified results</span>
     <h1 id="title" class="tinted">Notify</h1>
     <p id="blurb">Every pick we've sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play.</p>
