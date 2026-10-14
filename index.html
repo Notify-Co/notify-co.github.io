@@ -78,9 +78,8 @@ h2 { font-size: clamp(1.7rem, 3.6vw, 2.3rem); }
 
 /* Hero header */
 header { display: grid; justify-items: center; text-align: center; gap: 18px; padding: 64px 0 8px; position: relative; isolation: isolate; }
-/* Floating sport logos around the Notify title (front tab only), tiles from the reference design */
-.sport-float { display: none; position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-:root[data-capper="team"] .sport-float { display: block; }
+/* Floating sport logos around the title, tiles from the reference design. Notify shows a fixed set; capper tabs show the sports they have picks in. */
+.sport-float { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .lg { position: absolute; display: grid; place-items: center; width: 72px; height: 72px; border-radius: 16px; rotate: var(--r, 0deg);
   background: linear-gradient(135deg, oklch(30% 0.09 270 / .9), oklch(16% 0.05 265 / .92)); border: 1px solid oklch(80% 0.1 270 / .45);
   box-shadow: inset 0 1px 0 oklch(100% 0 0 / .15), 0 0 20px oklch(60% 0.2 280 / .45), 0 16px 32px oklch(0% 0 0 / .5);
@@ -91,7 +90,7 @@ header { display: grid; justify-items: center; text-align: center; gap: 18px; pa
 .lg--sm img { width: 40px; height: 40px; }
 @keyframes lgFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
 @media (max-width: 760px) {
-  :root[data-capper="team"] header { padding-top: 104px; }
+  header.has-floats { padding-top: 104px; }
   .lg, .lg--sm { width: 44px; height: 44px; border-radius: 11px; }
   .lg img, .lg--sm img { width: 30px; height: 30px; }
   .lg[data-m] { left: var(--mx) !important; right: auto !important; top: var(--my) !important; }
@@ -277,14 +276,7 @@ footer p { margin: 0; max-width: 60ch; }
 </nav>
 <div class="wrap">
   <header>
-    <div class="sport-float" aria-hidden="true">
-      <span class="lg" data-m style="left: 4%; top: 10%; --r: -6deg; --d: -1s; --mx: 3%; --my: 14px"><img src="logos/nfl.png" alt="" width="40" height="40" loading="lazy"></span>
-      <span class="lg lg--sm" data-m style="left: 15%; top: 42%; --r: 5deg; --d: -3.5s; --mx: 20%; --my: 40px"><img src="logos/mlb.png" alt="" width="40" height="40" loading="lazy"></span>
-      <span class="lg" data-m style="left: 3%; top: 70%; --r: -3deg; --d: -5.5s; --mx: 37%; --my: 12px"><img src="logos/unrivaled.png" alt="" width="40" height="40" loading="lazy"></span>
-      <span class="lg" data-m style="right: 5%; top: 8%; --r: 6deg; --d: -4.4s; --mx: 54%; --my: 36px"><img src="logos/nba.png" alt="" width="40" height="40" loading="lazy"></span>
-      <span class="lg lg--sm" data-m style="right: 15%; top: 40%; --r: -5deg; --d: -.6s; --mx: 71%; --my: 10px"><img src="logos/soccer.png" alt="" width="40" height="40" loading="lazy"></span>
-      <span class="lg" data-m style="right: 4%; top: 72%; --r: 3deg; --d: -6.6s; --mx: 86%; --my: 38px"><img src="logos/wnba.png" alt="" width="40" height="40" loading="lazy"></span>
-    </div>
+    <div class="sport-float" id="sportFloat" aria-hidden="true"></div>
     <span class="eyebrow" id="eyebrow">Notify · Verified results</span>
     <h1 id="title" class="tinted">Notify</h1>
     <p id="blurb">Every pick we've sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play.</p>
@@ -625,9 +617,50 @@ function renderLog(rows) {
   more.textContent = `Show more (${list.length - shown} left)`;
 }
 
+const SPORT_LOGOS = { NFL: "nfl", MLB: "mlb", UNR: "unrivaled", NBA: "nba", SOC: "soccer", WNBA: "wnba", CFB: "cfb", FIBA: "fiba" };
+const TEAM_FLOATS = ["NFL", "MLB", "UNR", "NBA", "SOC", "WNBA"];
+const FLOAT_SLOTS = [["4%", "10%"], ["15%", "42%"], ["3%", "70%"]];
+const FLOAT_PICK = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
+const FLOAT_TILT = ["-6deg", "5deg", "-3deg", "6deg", "-5deg", "3deg"];
+let floatsFor = null;
+function renderFloats() {
+  const key = capper + ":" + ALL.length;
+  if (floatsFor === key) return;
+  floatsFor = key;
+  const list = capper === TEAM ? TEAM_FLOATS : [...new Set(byCapper().map(r => r.sport))].filter(s => SPORT_LOGOS[s]).sort();
+  const nLeft = Math.ceil(list.length / 2), n = list.length;
+  const tile = (s, i) => {
+    const left = i < nLeft, k = left ? i : i - nLeft, per = left ? nLeft : n - nLeft;
+    const [x, y] = FLOAT_SLOTS[FLOAT_PICK[per][k]];
+    const mx = 50 - 5.5 - (n - 1) * 8.5 + i * 17;
+    return `<span class="lg${i % 2 ? " lg--sm" : ""}" data-m style="${left ? "left" : "right"}: ${x}; top: ${y}; --r: ${FLOAT_TILT[i % 6]}; --d: ${-(i * 1.1 + .6).toFixed(1)}s; --mx: ${mx.toFixed(1)}%; --my: ${i % 2 ? 38 : 12}px"><img src="logos/${SPORT_LOGOS[s]}.png" alt="" width="40" height="40"></span>`;
+  };
+  document.getElementById("sportFloat").innerHTML = list.map(tile).join("");
+  document.querySelector("header").classList.toggle("has-floats", n > 0);
+  if (n && ALL.length) requestAnimationFrame(orbitIn);
+}
+// Tiles whip around an orbit of the header and decelerate hard into their resting spots.
+function orbitIn() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const head = document.querySelector("header").getBoundingClientRect();
+  const hx = head.left + head.width / 2, hy = head.top + head.height * .46;
+  const rx = Math.min(head.width * .44, 520), ry = Math.max(head.height * .42, 120);
+  document.querySelectorAll("#sportFloat .lg").forEach((el, i) => {
+    el.getAnimations().forEach(a => { if (a.id === "orbit") a.cancel(); });
+    const b = el.getBoundingClientRect();
+    const dx = b.left + b.width / 2 - hx, dy = b.top + b.height / 2 - hy;
+    const phi = Math.atan2(dy / ry, dx / rx), turns = 1.15 + (i % 3) * .12, N = 36, frames = [];
+    for (let f = 0; f <= N; f++) {
+      const t = f / N, p = 1 - Math.pow(1 - t, 4), th = phi - turns * 2 * Math.PI * (1 - p), w = p * p;
+      const x = (Math.cos(th) * rx) * (1 - w) + dx * w, y = (Math.sin(th) * ry) * (1 - w) + dy * w;
+      frames.push({ offset: t, transform: `translate(${(x - dx).toFixed(1)}px, ${(y - dy).toFixed(1)}px) scale(${(.7 + .3 * p).toFixed(3)})`, opacity: Math.min(1, t * 6) });
+    }
+    el.animate(frames, { duration: 1200, delay: i * 45, easing: "linear", fill: "backwards", id: "orbit" });
+  });
+}
 function renderAll() {
   const rows = view();
-  renderTabs(); renderHeader(); renderFilters(); renderBoard(rows);
+  renderTabs(); renderHeader(); renderFloats(); renderFilters(); renderBoard(rows);
   groupTable("sportTable", inPeriod(byCapper()), "sport", "Sport", SPORT_NAMES);
   const multi = capper === TEAM && new Set(ALL.map(r => r.capper)).size > 1;
   document.getElementById("capperSec").hidden = !multi;
