@@ -6,13 +6,13 @@
 <title>Notify Pick Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Black&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=Archivo+Black&display=swap">
 <style>
 @property --ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 html { overflow-x: clip; } body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }
 /* Layout: one centered column. Hero header, filters, scoreboard, tables, two chart consoles, pick log, sunrise footer.
    Look: "Daybreak" night design. Deep night-navy ground lit by a dusk glow, Archivo Black display type with
-   gradient-filled headlines, Archivo body, JetBrains Mono kickers. Glass panels with gradient hairline borders, pill
+   gradient-filled headlines, Archivo Black headers, Archivo for everything else. Glass panels with gradient hairline borders, pill
    controls, soft glows and deep shadows. Each tab keeps its own accent (Notify pink/blue, Caleb green, Sammy red,
    Quentin yellow, Footy purple); wins stay green and losses red. */
 :root {
@@ -43,7 +43,7 @@ html { overflow-x: clip; } body { margin: 0; } img { max-width: 100%; } [hidden]
   --nav-bg: oklch(12% 0.04 265 / .78);
   --f-display: "Archivo Black", "Archivo", system-ui, sans-serif;
   --f-body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --f-mono: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 :root[data-capper="team"]    { --accent: #D68FBC; --accent-2: #53A0C4; }
 :root[data-capper="caleb"]   { --accent: #39ff88; --accent-2: #00d1ff; }
@@ -51,7 +51,7 @@ html { overflow-x: clip; } body { margin: 0; } img { max-width: 100%; } [hidden]
 :root[data-capper="quentin"] { --accent: #ffd60a; --accent-2: #ff6b00; }
 :root[data-capper="footy"]   { --accent: #d65bff; --accent-2: #ff4fa8; }
 *, *::before, *::after { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; min-height: 100vh; overflow-x: clip;
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-variant-numeric: tabular-nums; font-size: 15px; line-height: 1.55; min-height: 100vh; overflow-x: clip;
   background-image:
     radial-gradient(ellipse 70% 520px at 50% -120px, color-mix(in oklch, var(--accent-2) 26%, transparent), transparent 70%),
     radial-gradient(ellipse 45% 360px at 50% 260px, oklch(66% 0.2 42 / .14), transparent 70%),
@@ -63,7 +63,8 @@ a { color: var(--sky); } a:hover { color: var(--sun); }
 .num, td.n, th.n { font-variant-numeric: tabular-nums; }
 
 /* Type */
-h1, h2 { font-family: var(--f-display); font-weight: 400; margin: 0; text-wrap: balance; line-height: 1; letter-spacing: -0.015em;
+button, input, select, textarea { font-family: inherit; }
+h1, h2 { font-family: var(--f-display); font-weight: 900; font-synthesis: none; margin: 0; text-wrap: balance; line-height: 1; letter-spacing: -0.015em;
   background: linear-gradient(180deg, #fff 30%, oklch(84% 0.07 235)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 h1 { font-size: clamp(2.6rem, 8vw, 5rem); padding-bottom: .06em; text-transform: uppercase; }
 :root[data-capper="team"] h1 { font-size: clamp(3.2rem, 11vw, 6.6rem); }
@@ -100,12 +101,12 @@ header::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 70
 .tab[aria-selected="true"] { color: oklch(20% 0.08 262); background: var(--tab-c); border-color: var(--tab-c);
   box-shadow: 0 4px 0 color-mix(in oklch, var(--tab-c) 60%, black), 0 10px 24px oklch(0% 0 0 / .45), 0 0 24px color-mix(in oklch, var(--tab-c) 40%, transparent); }
 .tab[aria-selected="true"]::before { background: oklch(20% 0.08 262); box-shadow: none; }
-.tab.team { margin-right: 14px; padding-left: 8px; font: 400 1.4rem/1 var(--f-display); letter-spacing: .01em; color: #fff; min-height: 48px; }
-.tab.team::before { width: 30px; height: 30px; background: url("notify-logo.png") center / contain no-repeat; border-radius: 0; box-shadow: none; filter: drop-shadow(0 3px 6px oklch(0% 0 0 / .55)); }
+.tab.team { margin-right: 14px; padding-left: 8px; font: 900 1.4rem/1 var(--f-display); font-synthesis: none; letter-spacing: .01em; color: #fff; min-height: 48px; }
+.tab.team::before { width: 24px; height: 24px; background: url("notify-logo.png") center / contain no-repeat; border-radius: 0; box-shadow: none; filter: drop-shadow(0 0 6px oklch(88% 0.2 150 / .45)) drop-shadow(0 0 2px oklch(95% 0.15 150 / .35)); }
 .tab.team[aria-selected="true"] { padding-right: 20px; }
-.tab.team[aria-selected="true"]::before { background: url("notify-logo.png") center / contain no-repeat; border-radius: 0; box-shadow: none; filter: drop-shadow(0 3px 6px oklch(0% 0 0 / .55)); }
+.tab.team[aria-selected="true"]::before { background: url("notify-logo.png") center / contain no-repeat; border-radius: 0; box-shadow: none; filter: drop-shadow(0 0 6px oklch(88% 0.2 150 / .45)) drop-shadow(0 0 2px oklch(95% 0.15 150 / .35)); }
 .tab:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
-@media (max-width: 520px) { .tab { font-size: 14px; padding: 0 12px; } .tab.team { font-size: 1.2rem; margin-right: 4px; } .tab.team::before { width: 24px; height: 24px; } }
+@media (max-width: 520px) { .tab { font-size: 14px; padding: 0 12px; } .tab.team { font-size: 1.2rem; margin-right: 4px; } .tab.team::before { width: 20px; height: 20px; } }
 
 /* Filters */
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
@@ -133,7 +134,7 @@ header::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 70
 .board > div { position: relative; padding: 30px 28px 28px; display: grid; gap: 10px; align-content: start; }
 .board > div + div::before { content: ""; position: absolute; left: 0; top: 18%; bottom: 18%; width: 1px; background: linear-gradient(180deg, transparent, var(--line-2), transparent); }
 .board .k { font: 700 12px/1 var(--f-body); letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
-.board .v { font-family: var(--f-display); font-weight: 400; font-size: clamp(1.5rem, 3.1vw, 2.2rem); line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap;
+.board .v { font-family: var(--f-display); font-weight: 900; font-synthesis: none; font-size: clamp(1.5rem, 3.1vw, 2.2rem); line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap;
   background: linear-gradient(180deg, #fff 30%, oklch(80% 0.06 250)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .board .v.pos, .board .v.neg { background: none; -webkit-background-clip: border-box; background-clip: border-box; text-shadow: 0 0 28px color-mix(in oklch, currentColor 45%, transparent); }
 .board .v.pos { color: var(--win); } .board .v.neg { color: var(--loss); }
@@ -194,7 +195,7 @@ td.num { font-family: var(--f-mono); font-size: .84rem; color: var(--ink-2); }
 .range { display: grid; gap: 8px; padding: 6px 0 8px; }
 .range-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font: 500 11px/1.3 var(--f-mono); letter-spacing: .04em; color: var(--ink-3); }
 .range-row b { color: #fff; font-weight: 500; }
-#rangeNet { font: 400 1.1rem/1 var(--f-display); }
+#rangeNet { font: 900 1.1rem/1 var(--f-display); font-synthesis: none; }
 .dual { position: relative; height: 24px; }
 .dual .track { position: absolute; left: 0; right: 0; top: 10px; height: 4px; background: var(--chip); border-radius: 999px; }
 .dual .fill { position: absolute; top: 10px; height: 4px; border-radius: 999px; background: linear-gradient(90deg, var(--accent-2), var(--accent)); box-shadow: 0 0 12px color-mix(in oklch, var(--accent) 70%, transparent); }
@@ -231,8 +232,8 @@ footer { position: relative; margin-top: 40px; padding: 0 0 36px; display: grid;
   -webkit-mask-image: radial-gradient(ellipse 50% 100% at 50% 0%, #000, transparent 75%); mask-image: radial-gradient(ellipse 50% 100% at 50% 0%, #000, transparent 75%);
   filter: blur(1.5px); opacity: .5; animation: shimmer 6s ease-in-out infinite; }
 @keyframes shimmer { 0%, 100% { opacity: .5; scale: 1 1; } 50% { opacity: .3; scale: 1.08 1; } }
-footer .mark { font: 400 1.25rem/1 var(--f-display); letter-spacing: .01em; text-transform: uppercase; color: #fff; display: inline-flex; align-items: center; gap: 10px; margin-top: 14px; }
-footer .mark::before { content: ""; width: 26px; height: 26px; background: url("notify-logo.png") center / contain no-repeat; border-radius: 0; box-shadow: none; filter: drop-shadow(0 3px 6px oklch(0% 0 0 / .55)); }
+footer .mark { font: 900 1.25rem/1 var(--f-display); font-synthesis: none; letter-spacing: .01em; text-transform: uppercase; color: #fff; display: inline-flex; align-items: center; gap: 10px; margin-top: 14px; }
+footer .mark::before { content: ""; width: 21px; height: 21px; background: url("notify-logo.png") center / contain no-repeat; border-radius: 0; box-shadow: none; filter: drop-shadow(0 0 6px oklch(88% 0.2 150 / .45)) drop-shadow(0 0 2px oklch(95% 0.15 150 / .35)); }
 footer p { margin: 0; max-width: 60ch; }
 
 /* Entrance */
