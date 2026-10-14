@@ -617,8 +617,8 @@ function renderLog(rows) {
   more.textContent = `Show more (${list.length - shown} left)`;
 }
 
-const SPORT_LOGOS = { NFL: "nfl", MLB: "mlb", UNR: "unrivaled", NBA: "nba", SOC: "soccer", WNBA: "wnba", CFB: "cfb", FIBA: "fiba" };
-const TEAM_FLOATS = ["NFL", "MLB", "UNR", "NBA", "SOC", "WNBA"];
+const SPORT_LOGOS = { NFL: "nfl", MLB: "mlb", UNR: "unrivaled", NBA: "nba", SOC: ["soccer", "laliga", "mls", "seriea"], WNBA: "wnba", CFB: "cfb", FIBA: "fiba" };
+const TEAM_FLOATS = ["nfl", "mlb", "unrivaled", "nba", "soccer", "wnba"];
 const FLOAT_SLOTS = [["4%", "10%"], ["15%", "42%"], ["3%", "70%"]];
 const FLOAT_PICK = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
 const FLOAT_TILT = ["-6deg", "5deg", "-3deg", "6deg", "-5deg", "3deg"];
@@ -627,13 +627,13 @@ function renderFloats() {
   const key = capper + ":" + ALL.length;
   if (floatsFor === key) return;
   floatsFor = key;
-  const list = capper === TEAM ? TEAM_FLOATS : [...new Set(byCapper().map(r => r.sport))].filter(s => SPORT_LOGOS[s]).sort();
+  const list = capper === TEAM ? TEAM_FLOATS : [...new Set(byCapper().map(r => r.sport))].filter(s => SPORT_LOGOS[s]).sort().flatMap(s => SPORT_LOGOS[s]);
   const nLeft = Math.ceil(list.length / 2), n = list.length;
   const tile = (s, i) => {
     const left = i < nLeft, k = left ? i : i - nLeft, per = left ? nLeft : n - nLeft;
     const [x, y] = FLOAT_SLOTS[FLOAT_PICK[per][k]];
     const mx = 50 - 5.5 - (n - 1) * 8.5 + i * 17;
-    return `<span class="lg${i % 2 ? " lg--sm" : ""}" data-m style="${left ? "left" : "right"}: ${x}; top: ${y}; --r: ${FLOAT_TILT[i % 6]}; --d: ${-(i * 1.1 + .6).toFixed(1)}s; --mx: ${mx.toFixed(1)}%; --my: ${i % 2 ? 38 : 12}px"><img src="logos/${SPORT_LOGOS[s]}.png" alt="" width="40" height="40"></span>`;
+    return `<span class="lg${i % 2 ? " lg--sm" : ""}" data-m style="${left ? "left" : "right"}: ${x}; top: ${y}; --r: ${FLOAT_TILT[i % 6]}; --d: ${-(i * 1.1 + .6).toFixed(1)}s; --mx: ${mx.toFixed(1)}%; --my: ${i % 2 ? 38 : 12}px"><img src="logos/${s}.png" alt="" width="40" height="40"></span>`;
   };
   document.getElementById("sportFloat").innerHTML = list.map(tile).join("");
   document.querySelector("header").classList.toggle("has-floats", n > 0);
@@ -655,7 +655,7 @@ function orbitIn() {
       const x = (Math.cos(th) * rx) * (1 - w) + dx * w, y = (Math.sin(th) * ry) * (1 - w) + dy * w;
       frames.push({ offset: t, transform: `translate(${(x - dx).toFixed(1)}px, ${(y - dy).toFixed(1)}px) scale(${(.7 + .3 * p).toFixed(3)})`, opacity: Math.min(1, t * 6) });
     }
-    el.animate(frames, { duration: 1200, delay: i * 45, easing: "linear", fill: "backwards", id: "orbit" });
+    el.animate(frames, { duration: 1600, delay: i * 60, easing: "linear", fill: "backwards", id: "orbit" });
   });
 }
 function renderAll() {
