@@ -6,70 +6,92 @@
 <title>NotifyPicks Pick Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }
 /* Layout: a single scoreboard column. Ledger header, headline numbers, sport table, two charts, platform split, full pick log. */
+/* Look: dark neon terminal. Near-black blue-violet ground, hairline grid, one glowing accent per section
+   (team cyan; Caleb green, Sammy red, Quentin yellow, Footy purple). Win/loss keep fixed meanings. */
 :root {
-  --bg: #f5f7f6;
-  --surface: #ffffff;
-  --ink: #0f1a17;
-  --ink-2: #4a5753;
-  --ink-3: #7a8783;
-  --line: #dde3e0;
-  --accent: #0d6b4f;
-  --up: #2a78d6;
-  --down: #e34948;
-  --win: #0a7a3a;
-  --loss: #c03434;
-  --s1: #2a78d6;
-  --s2: #eb6834;
-  --chip: #e9eeec;
-  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  color-scheme: dark;
+  --bg: #06070d;
+  --surface: #0c0e19;
+  --surface-2: #121527;
+  --ink: #e8eaf6;
+  --ink-2: #a6abc8;
+  --ink-3: #6e7493;
+  --line: #22263d;
+  --accent: #22e6ff;
+  --accent-2: #ff3df0;
+  --win: #3dffa2;
+  --loss: #ff5277;
+  --chip: #151931;
+  --nav-bg: rgba(6, 7, 13, .88);
+  --nav-fg: #e8eaf6;
+  --up: var(--accent);
+  --down: var(--loss);
+  --glow: 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent);
+  --f-display: "Chakra Petch", "Barlow Condensed", "Arial Narrow", sans-serif;
   --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f1513; --surface: #161e1b; --ink: #edf2ef; --ink-2: #b4c0bb; --ink-3: #85928d;
-    --line: #2a3531; --accent: #4cc69a; --up: #3987e5; --down: #e66767; --win: #4fd08a; --loss: #f07a7a;
-    --s1: #3987e5; --s2: #d95926; --chip: #222c29; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0f1513; --surface: #161e1b; --ink: #edf2ef; --ink-2: #b4c0bb; --ink-3: #85928d;
-  --line: #2a3531; --accent: #4cc69a; --up: #3987e5; --down: #e66767; --win: #4fd08a; --loss: #f07a7a;
-  --s1: #3987e5; --s2: #d95926; --chip: #222c29; color-scheme: dark;
-}
+:root[data-capper="caleb"]   { --accent: #39ff88; --accent-2: #00d1ff; }
+:root[data-capper="sammy"]   { --accent: #ff3b5c; --accent-2: #ff9f1c; }
+:root[data-capper="quentin"] { --accent: #ffd60a; --accent-2: #ff6b00; }
+:root[data-capper="footy"]   { --accent: #d65bff; --accent-2: #ff4fa8; }
 * { box-sizing: border-box; }
-body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; min-height: 100vh;
+  background-image:
+    radial-gradient(900px 420px at 15% -8%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%),
+    radial-gradient(700px 380px at 100% 0%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 70%),
+    linear-gradient(color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px);
+  background-size: auto, auto, 40px 40px, 40px 40px; background-attachment: fixed; transition: background-color .3s; }
+::selection { background: var(--accent); color: var(--bg); }
 .wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 36px; }
 .num, td.n, th.n { font-variant-numeric: tabular-nums; }
-h1, h2 { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .02em; margin: 0; text-wrap: balance; line-height: 1.05; }
-h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); }
+h1, h2 { font-family: var(--f-display); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin: 0; text-wrap: balance; line-height: 1.05; }
+h1 { font-size: clamp(2.3rem, 6.5vw, 3.8rem); color: var(--ink); text-shadow: 0 0 24px color-mix(in srgb, var(--accent) 45%, transparent); }
+h1::after { content: "_"; color: var(--accent); margin-left: .08em; animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { h1::after { animation: none; } }
+h2 { position: relative; padding-left: 14px; }
+h2::before { content: ""; position: absolute; left: 0; top: .18em; bottom: .18em; width: 4px; background: var(--accent); box-shadow: var(--glow); }
 h2 { font-size: 1.5rem; }
 .eyebrow { font-family: var(--f-mono); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
 .muted { color: var(--ink-2); }
 .small { font-size: .82rem; color: var(--ink-3); }
 
-header { display: grid; gap: 10px; border-bottom: 2px solid var(--ink); padding-bottom: 18px; }
+header { display: grid; gap: 10px; padding-bottom: 20px; position: relative; }
+header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-2) 60%, transparent); box-shadow: var(--glow); }
 .head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px; }
 .stamp { font-family: var(--f-mono); font-size: .8rem; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
-.dot.live { background: var(--win); }
+.dot.live { background: var(--win); box-shadow: 0 0 10px var(--win); }
 
-.filter-stack { display: grid; gap: 10px; }
-.filters .lbl { min-width: 4.5em; }
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--nav-bg); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.tabs-inner { max-width: 1040px; margin: 0 auto; padding-inline: 16px; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.tabs-inner::-webkit-scrollbar { display: none; }
+.tab { font: 600 1.05rem var(--f-display); text-transform: uppercase; letter-spacing: .06em; color: color-mix(in srgb, var(--nav-fg) 62%, transparent); background: none; border: 0; border-bottom: 3px solid transparent; padding: 14px 14px 11px; cursor: pointer; white-space: nowrap; text-decoration: none; }
+.tab:hover { color: var(--nav-fg); }
+.tab::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 8px; vertical-align: .12em; background: var(--tab-c); box-shadow: 0 0 8px var(--tab-c); transform: rotate(45deg); }
+.tab:hover { color: var(--tab-c); }
+.tab[aria-selected="true"] { color: var(--tab-c); border-bottom-color: var(--tab-c); text-shadow: 0 0 12px color-mix(in srgb, var(--tab-c) 60%, transparent); }
+.tab.team { padding-left: 0; margin-right: 10px; }
+@media (max-width: 480px) { .tab { font-size: .95rem; padding: 13px 8px 10px; letter-spacing: .03em; } .tab.team { margin-right: 4px; } }
+.tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .filters .lbl { font-family: var(--f-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-right: 4px; }
-.chip { font: 500 .85rem var(--f-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip { font: 500 .85rem var(--f-body); border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 2px; padding: 6px 14px; cursor: pointer; text-transform: uppercase; letter-spacing: .05em; font-size: .78rem; }
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); box-shadow: var(--glow); }
 .chip:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-top: 2px solid var(--accent); box-shadow: 0 -6px 24px -12px var(--accent); clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px)); }
 .board > div { padding: 18px 20px; display: grid; gap: 2px; border-left: 1px solid var(--line); }
 .board > div:first-child { border-left: 0; }
 .board .k { font-family: var(--f-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.board .v.pos, .board .v.neg { text-shadow: 0 0 22px currentColor; }
 .board .v { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.9rem, 4.5vw, 2.7rem); line-height: 1.05; font-variant-numeric: tabular-nums; }
 .board .sub { font-size: .82rem; color: var(--ink-2); }
 @media (max-width: 720px) {
@@ -81,7 +103,7 @@ header { display: grid; gap: 10px; border-bottom: 2px solid var(--ink); padding-
 
 section { display: grid; gap: 14px; }
 .sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
-.tbl-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.tbl-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); }
 table { border-collapse: collapse; width: 100%; font-size: .9rem; }
 th, td { padding: 10px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
 tbody tr:last-child td { border-bottom: 0; }
@@ -96,13 +118,13 @@ td.play { white-space: normal; min-width: 200px; }
 
 .charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 820px) { .charts { grid-template-columns: minmax(0, 1fr); } }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 16px 10px; display: grid; gap: 8px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line);  padding: 16px 16px 10px; display: grid; gap: 8px; min-width: 0; }
 .card h3 { margin: 0; font: 600 .95rem var(--f-body); }
 .chart { position: relative; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .chart text { font-family: var(--f-mono); font-size: 11px; fill: var(--ink-3); }
 .grid line { stroke: var(--line); stroke-width: 1; }
-.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font: 500 .78rem var(--f-mono); padding: 6px 9px; border-radius: 4px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); z-index: 2; }
+.tip { position: absolute; pointer-events: none; background: var(--surface-2); color: var(--ink); border: 1px solid var(--accent); box-shadow: var(--glow); font: 500 .78rem var(--f-mono); padding: 6px 9px; border-radius: 4px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); z-index: 2; }
 .legend { display: flex; gap: 14px; font-size: .8rem; color: var(--ink-2); flex-wrap: wrap; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 
@@ -110,30 +132,30 @@ td.play { white-space: normal; min-width: 200px; }
 .log-tools input, .log-tools select { font: .9rem var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 7px 10px; }
 .log-tools input { flex: 1 1 220px; min-width: 0; }
 .res { font: 600 .72rem var(--f-mono); padding: 2px 7px; border-radius: 3px; letter-spacing: .05em; }
-.res.W { background: color-mix(in srgb, var(--win) 16%, transparent); color: var(--win); }
-.res.L { background: color-mix(in srgb, var(--loss) 16%, transparent); color: var(--loss); }
+.res.W { background: color-mix(in srgb, var(--win) 14%, transparent); color: var(--win); border: 1px solid color-mix(in srgb, var(--win) 40%, transparent); }
+.res.L { background: color-mix(in srgb, var(--loss) 14%, transparent); color: var(--loss); border: 1px solid color-mix(in srgb, var(--loss) 40%, transparent); }
 .res.P { background: var(--chip); color: var(--ink-2); }
-.more { justify-self: center; font: 500 .9rem var(--f-body); background: transparent; color: var(--ink); border: 1px solid var(--ink); border-radius: 4px; padding: 8px 18px; cursor: pointer; }
+.more { justify-self: center; font: 600 .9rem var(--f-display); text-transform: uppercase; letter-spacing: .08em; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 8px 18px; cursor: pointer; }
 footer { border-top: 1px solid var(--line); padding-top: 14px; font-size: .8rem; color: var(--ink-3); display: grid; gap: 4px; }
 </style>
 
 <meta name="color-scheme" content="light dark">
 </head>
 <body>
+<nav class="tabs" aria-label="Team and cappers">
+  <div class="tabs-inner" id="tabs" role="tablist"></div>
+</nav>
 <div class="wrap">
   <header>
-    <span class="eyebrow">NotifyPicks · Verified results</span>
+    <span class="eyebrow" id="eyebrow">NotifyPicks · Verified results</span>
     <div class="head-row">
-      <h1>Pick Tracker</h1>
+      <h1 id="title">NotifyPicks</h1>
       <div class="stamp"><span class="dot" id="srcDot"></span><span id="srcText">Loading picks…</span></div>
     </div>
-    <p class="muted" style="margin:0;max-width:62ch">Every pick we've sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play.</p>
+    <p class="muted" id="blurb" style="margin:0;max-width:62ch">Every pick we've sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play.</p>
   </header>
 
-  <div class="filter-stack">
-    <div class="filters" id="capperFilters" role="group" aria-label="Filter by capper"></div>
-    <div class="filters" id="sportFilters" role="group" aria-label="Filter by sport"></div>
-  </div>
+  <div class="filters" id="sportFilters" role="group" aria-label="Filter by sport"></div>
 
   <div class="board" id="board" aria-live="polite"></div>
 
@@ -154,7 +176,7 @@ footer { border-top: 1px solid var(--line); padding-top: 14px; font-size: .8rem;
     </div>
     <div class="card">
       <h3>Units by month</h3>
-      <div class="legend"><span><i style="background:var(--up)"></i>Up month</span><span id="downLeg"><i style="background:var(--down)"></i>Down month</span></div>
+      <div class="legend"><span><i style="background:var(--up)"></i>Up month</span><span id="downLeg"><i style="background:color-mix(in srgb, var(--down) 22%, transparent);outline:1.5px solid var(--down);outline-offset:-1.5px"></i>Down month</span></div>
       <div class="chart" id="monthChart"></div>
     </div>
   </div>
@@ -259,16 +281,35 @@ function niceTicks(min, max, count) {
 
 /* ---------- State ---------- */
 let ALL = [], sport = "All", capper = "All", shown = 25;
+const TEAM = "All";
+const TAB_COLORS = { team: "#22e6ff", caleb: "#39ff88", sammy: "#ff3b5c", quentin: "#ffd60a", footy: "#d65bff" };
+const slug = c => c.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+function capperFromHash() {
+  const h = decodeURIComponent(location.hash.slice(1)).toLowerCase();
+  const hit = SOURCES.find(s => slug(s.capper) === h);
+  return hit ? hit.capper : TEAM;
+}
+function renderTabs() {
+  const items = [TEAM, ...SOURCES.map(s => s.capper)];
+  const box = document.getElementById("tabs");
+  box.innerHTML = items.map(c => `<a class="tab${c === TEAM ? " team" : ""}" style="--tab-c:${TAB_COLORS[c === TEAM ? "team" : slug(c)] || "var(--accent)"}" role="tab" href="#${c === TEAM ? "team" : slug(c)}" aria-selected="${c === capper}">${c === TEAM ? "NotifyPicks" : esc(c)}</a>`).join("");
+}
+function renderHeader() {
+  const team = capper === TEAM;
+  if (team) document.documentElement.removeAttribute("data-capper"); else document.documentElement.setAttribute("data-capper", slug(capper));
+  document.getElementById("title").textContent = team ? "NotifyPicks" : capper;
+  document.getElementById("eyebrow").textContent = team ? `Team results · ${SOURCES.map(s => s.capper).join(", ")}` : "NotifyPicks capper · Personal results";
+  document.getElementById("blurb").textContent = team
+    ? "Every pick the team has sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play."
+    : `Every pick ${capper} has sent, graded. Units are a standard stake size, so results compare fairly no matter how much you bet per play.`;
+  document.title = team ? "NotifyPicks Pick Tracker" : `${capper} · NotifyPicks Pick Tracker`;
+}
+addEventListener("hashchange", () => { capper = capperFromHash(); sport = "All"; shown = 25; renderAll(); window.scrollTo({ top: 0 }); });
 const byCapper = () => capper === "All" ? ALL : ALL.filter(r => r.capper === capper);
 const bySport = () => sport === "All" ? ALL : ALL.filter(r => r.sport === sport);
 const view = () => byCapper().filter(r => sport === "All" || r.sport === sport);
 
 function renderFilters() {
-  const cappers = SOURCES.map(s => s.capper).filter(c => ALL.some(r => r.capper === c));
-  const cbox = document.getElementById("capperFilters");
-  cbox.hidden = cappers.length < 2;
-  cbox.innerHTML = '<span class="lbl">Capper</span>' + ["All", ...cappers].map(c => `<button class="chip" type="button" aria-pressed="${c === capper}" data-c="${esc(c)}">${c === "All" ? "Whole team" : esc(c)}</button>`).join("");
-  cbox.querySelectorAll(".chip").forEach(b => b.onclick = () => { capper = b.dataset.c; shown = 25; renderAll(); });
   const sports = [...new Set(byCapper().map(r => r.sport))].sort();
   if (sport !== "All" && !sports.includes(sport)) sport = "All";
   const box = document.getElementById("sportFilters");
@@ -290,7 +331,7 @@ function groupTable(id, rows, key, label, nameMap) {
   const total = agg(rows);
   const row = (name, a, bold) => {
     const w = Math.abs(a.roi) / maxAbs * 50;
-    const bar = a.roi >= 0 ? `left:50%;width:${w}%;background:var(--up)` : `right:50%;width:${w}%;background:var(--down)`;
+    const bar = a.roi >= 0 ? `left:50%;width:${w}%;background:var(--up)` : `right:50%;width:${w}%;background:color-mix(in srgb, var(--down) 22%, transparent);outline:1.5px solid var(--down);outline-offset:-1.5px`;
     return `<tr${bold ? ' style="font-weight:600"' : ""}><td class="sport-name">${name}</td><td class="n">${a.n}</td><td class="n">${a.w}–${a.l}</td><td class="n">${a.risk.toFixed(1)}u</td><td class="n ${cls(a.net)}">${fmtU(a.net)}</td><td class="n ${cls(a.roi)}">${fmtP(a.roi)}</td><td class="bar-cell"><div class="mini" title="ROI ${fmtP(a.roi)}"><i class="zero"></i><span style="${bar}"></span></div></td></tr>`;
   };
   document.getElementById(id).innerHTML = `<thead><tr><th>${label}</th><th class="n">Picks</th><th class="n">Record</th><th class="n">Risked</th><th class="n">Net units</th><th class="n">ROI</th><th>ROI vs. break-even</th></tr></thead><tbody>${
@@ -329,7 +370,7 @@ function renderCum(rows) {
   months.forEach((mo, j) => { if (j % every) return; const [y, mm] = mo.k.split("-"); el("text", { x: X(mo.i), y: H - 8, "text-anchor": "middle" }, svg).textContent = MON[+mm - 1] + (mm === "01" || j === 0 ? " ’" + y.slice(2) : ""); });
   const pts = days.map((d, i) => `${X(i).toFixed(1)},${Y(d.v).toFixed(1)}`);
   el("path", { d: `M${X(0)},${Y(0)}L${pts.join("L")}L${X(days.length - 1)},${Y(0)}Z`, fill: "var(--up)", "fill-opacity": "0.12", stroke: "none" }, svg);
-  el("path", { d: "M" + pts.join("L"), fill: "none", stroke: "var(--up)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+  el("path", { d: "M" + pts.join("L"), fill: "none", stroke: "var(--up)", "stroke-width": 2, "stroke-linejoin": "round", style: "filter: drop-shadow(0 0 6px var(--accent))" }, svg);
   const lx = X(days.length - 1), ly = Y(run);
   el("circle", { cx: lx, cy: ly, r: 4.5, fill: "var(--up)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
   el("text", { x: lx - 8, y: ly - 10, "text-anchor": "end", style: "fill:var(--ink);font-weight:500" }, svg).textContent = fmtU(run);
@@ -369,7 +410,7 @@ function renderMonths(rows) {
     const path = up
       ? `M${x},${bot}V${top + r}Q${x},${top} ${x + r},${top}H${x + bw - r}Q${x + bw},${top} ${x + bw},${top + r}V${bot}Z`
       : `M${x},${top}V${bot - r}Q${x},${bot} ${x + r},${bot}H${x + bw - r}Q${x + bw},${bot} ${x + bw},${bot - r}V${top}Z`;
-    const bar = el("path", { d: path, fill: up ? "var(--up)" : "var(--down)" }, svg);
+    const bar = el("path", up ? { d: path, fill: "var(--up)" } : { d: path, fill: "color-mix(in srgb, var(--down) 22%, transparent)", stroke: "var(--down)", "stroke-width": 1.5 }, svg);
     const [yy, mm] = d.k.split("-");
     if (i % every === 0) el("text", { x: cx, y: H - 8, "text-anchor": "middle" }, svg).textContent = MON[+mm - 1] + (mm === "01" || i === 0 ? " ’" + yy.slice(2) : "");
     const hitR = el("rect", { x: m.l + slot * i, y: m.t, width: slot, height: ih, fill: "transparent" }, svg);
@@ -384,7 +425,7 @@ function renderLog(rows) {
   const fr = document.getElementById("fRes").value, fp = document.getElementById("fPlat").value;
   const list = rows.filter(r => (!q || r.play.toLowerCase().includes(q)) && (!fr || r.res === fr) && (!fp || r.plat === fp))
     .sort((a, b) => b.date.localeCompare(a.date));
-  const showSport = new Set(ALL.map(r => r.sport)).size > 1, showCap = new Set(ALL.map(r => r.capper)).size > 1;
+  const showSport = new Set(ALL.map(r => r.sport)).size > 1, showCap = capper === TEAM && new Set(ALL.map(r => r.capper)).size > 1;
   document.getElementById("logCount").textContent = `${list.length} pick${list.length === 1 ? "" : "s"} · newest first`;
   const resLbl = r => r === "W" ? "WIN" : r === "L" ? "LOSS" : (r || "—");
   document.getElementById("logTable").innerHTML = `<thead><tr><th>Date</th>${showCap ? "<th>Capper</th>" : ""}${showSport ? "<th>Sport</th>" : ""}<th>Pick</th><th class="n">Odds</th><th class="n">Risk</th><th>Result</th><th class="n">Units</th><th>Bet type</th></tr></thead><tbody>${
@@ -396,9 +437,9 @@ function renderLog(rows) {
 
 function renderAll() {
   const rows = view();
-  renderFilters(); renderBoard(rows);
+  renderTabs(); renderHeader(); renderFilters(); renderBoard(rows);
   groupTable("sportTable", byCapper(), "sport", "Sport", SPORT_NAMES);
-  const multi = new Set(ALL.map(r => r.capper)).size > 1;
+  const multi = capper === TEAM && new Set(ALL.map(r => r.capper)).size > 1;
   document.getElementById("capperSec").hidden = !multi;
   if (multi) groupTable("capperTable", bySport(), "capper", "Capper");
   renderCum(rows); renderMonths(rows);
@@ -420,6 +461,7 @@ function setSource(live) {
   document.getElementById("srcText").textContent = (live ? "Live from tracker · " : "") + "Through " + (last ? fmtDate(last) : "—");
 }
 
+capper = capperFromHash();
 ALL = fromSnapshot(); setupLog(); renderAll(); setSource(false);
 loadLive().then(rows => { ALL = rows; setupLog(); renderAll(); setSource(true); }).catch(() => {});
 </script>
