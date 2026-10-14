@@ -617,7 +617,7 @@ function renderLog(rows) {
   more.textContent = `Show more (${list.length - shown} left)`;
 }
 
-const SPORT_LOGOS = { NFL: "nfl", MLB: "mlb", UNR: "unrivaled", NBA: "nba", SOC: "soccer", WNBA: "wnba", CFB: "cfb" };
+const SPORT_LOGOS = { NFL: "nfl", MLB: "mlb", UNR: "unrivaled", NBA: "nba", SOC: "soccer", WNBA: "wnba", CFB: "cfb", FIBA: "fiba" };
 const TEAM_FLOATS = ["NFL", "MLB", "UNR", "NBA", "SOC", "WNBA"];
 const FLOAT_SLOTS = [["4%", "10%"], ["15%", "42%"], ["3%", "70%"]];
 const FLOAT_PICK = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
@@ -637,6 +637,26 @@ function renderFloats() {
   };
   document.getElementById("sportFloat").innerHTML = list.map(tile).join("");
   document.querySelector("header").classList.toggle("has-floats", n > 0);
+  if (n && ALL.length) requestAnimationFrame(orbitIn);
+}
+// Tiles whip around an orbit of the header and decelerate hard into their resting spots.
+function orbitIn() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const head = document.querySelector("header").getBoundingClientRect();
+  const hx = head.left + head.width / 2, hy = head.top + head.height * .46;
+  const rx = Math.min(head.width * .44, 520), ry = Math.max(head.height * .42, 120);
+  document.querySelectorAll("#sportFloat .lg").forEach((el, i) => {
+    el.getAnimations().forEach(a => { if (a.id === "orbit") a.cancel(); });
+    const b = el.getBoundingClientRect();
+    const dx = b.left + b.width / 2 - hx, dy = b.top + b.height / 2 - hy;
+    const phi = Math.atan2(dy / ry, dx / rx), turns = 1.15 + (i % 3) * .12, N = 36, frames = [];
+    for (let f = 0; f <= N; f++) {
+      const t = f / N, p = 1 - Math.pow(1 - t, 4), th = phi - turns * 2 * Math.PI * (1 - p), w = p * p;
+      const x = (Math.cos(th) * rx) * (1 - w) + dx * w, y = (Math.sin(th) * ry) * (1 - w) + dy * w;
+      frames.push({ offset: t, transform: `translate(${(x - dx).toFixed(1)}px, ${(y - dy).toFixed(1)}px) scale(${(.7 + .3 * p).toFixed(3)})`, opacity: Math.min(1, t * 6) });
+    }
+    el.animate(frames, { duration: 1200, delay: i * 45, easing: "linear", fill: "backwards", id: "orbit" });
+  });
 }
 function renderAll() {
   const rows = view();
