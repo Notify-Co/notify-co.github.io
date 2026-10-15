@@ -723,7 +723,7 @@ const TEAM_CODES = new Set("ATL BOS BKN CHA CHI CLE DAL DEN DET GSW HOU IND LAC 
 // Nicknames used in the sheet, so they join the player's other picks.
 const NICKNAMES = { AD: "Anthony Davis", AT: "Alyssa Thomas", KD: "Kevin Durant", PJ: "PJ Washington", CJ: "CJ McCollum", VJ: "VJ Edgecombe",
   OG: "OG Anunoby", JJ: "Jonquel Jones", CC: "Caitlin Clark", MAMU: "Mamukelashvili", PAIGE: "Paige Bueckers", BUECKERS: "Paige Bueckers",
-  CHELSEA: "Chelsea Gray", JONQUEL: "Jonquel Jones", "KMITCH ERROR": "Kmitch", MO: "Monique Akoa-Makani", "AKOA MAKANI": "Monique Akoa-Makani" };
+  CHELSEA: "Chelsea Gray", JONQUEL: "Jonquel Jones", KMITCH: "Kelsey Mitchell", "KMITCH ERROR": "Kelsey Mitchell", MO: "Monique Akoa-Makani", "AKOA MAKANI": "Monique Akoa-Makani" };
 // Multi-player DFS entries (Flex, F5, 4 Man, Power 3) don't name who's in them, so they stay off the map.
 const SKIP_ENTRY = /\b(Flex|F5|4 Man|P3|Power 3)\b/i;
 function playerOf(leg, teamPlay) {
@@ -747,6 +747,9 @@ function playersIn(play) {
   return { legs: legs.length, players: legs.map(l => playerOf(l, teamPlay)).filter(Boolean) };
 }
 const pKey = (sport, name) => sport + "|" + name.toLowerCase().replace(/[^a-z0-9 -]/g, "");
+// Unrivaled is played by WNBA players, so the two leagues share one star per player.
+const SPORT_FAMILY = { UNR: "WNBA" };
+const gxSportLabel = p => [...p.sports].sort().map(s => SPORT_NAMES[s] || s).join(" · ");
 // Each player gets an even share of a pick's units (a 2-leg pick gives each leg half), and the pick's result.
 function playerStats(rows) {
   const map = new Map();
@@ -754,10 +757,10 @@ function playerStats(rows) {
     const { legs, players } = playersIn(r.play);
     // Nicknames are basketball/football ones; in soccer "Chelsea" is the club, not Chelsea Gray.
     for (const name of new Set(players.map(n => r.sport === "SOC" ? n : NICKNAMES[n.toUpperCase()] || n))) {
-      const k = pKey(r.sport, name);
+      const fam = SPORT_FAMILY[r.sport] || r.sport, k = pKey(fam, name);
       let p = map.get(k);
-      if (!p) map.set(k, p = { name, sport: r.sport, cappers: new Set(), n: 0, w: 0, l: 0, risk: 0, net: 0 });
-      p.n++; p.cappers.add(r.capper); p.risk += r.risk / legs; p.net += r.net / legs;
+      if (!p) map.set(k, p = { name, sport: fam, sports: new Set(), cappers: new Set(), n: 0, w: 0, l: 0, risk: 0, net: 0 });
+      p.n++; p.cappers.add(r.capper); p.sports.add(r.sport); p.risk += r.risk / legs; p.net += r.net / legs;
       if (r.res === "W") p.w++; else if (r.res === "L") p.l++;
     }
   }
@@ -767,7 +770,7 @@ function playerStats(rows) {
     const full = list.filter(q => q !== p && q.sport === p.sport && q.name.includes(" ") && q.name.split(" ").pop().toLowerCase() === p.name.toLowerCase());
     if (full.length !== 1) continue;
     const q = full[0];
-    q.n += p.n; q.w += p.w; q.l += p.l; q.risk += p.risk; q.net += p.net; p.cappers.forEach(c => q.cappers.add(c)); p.merged = true;
+    q.n += p.n; q.w += p.w; q.l += p.l; q.risk += p.risk; q.net += p.net; p.cappers.forEach(c => q.cappers.add(c)); p.sports.forEach(s => q.sports.add(s)); p.merged = true;
   }
   return list.filter(p => !p.merged).map(p => ({ ...p, roi: p.risk ? p.net / p.risk : 0 }));
 }
@@ -796,7 +799,7 @@ function renderGalaxy() {
   document.getElementById("gxLegend").innerHTML = gxClusters.map(c => `<span><i style="background:${c.color};box-shadow:0 0 8px ${c.color}"></i><b>${c.name}</b> ${c.desc} · ${c.players.length}</span>`).join("")
     + '<span class="gx-note">Bigger stars got more picks</span>';
   const lb = (id, list) => document.getElementById(id).innerHTML = `<thead><tr><th>Player</th><th class="n">Picks</th><th class="n">Record</th><th class="n">Net units</th></tr></thead><tbody>${
-    list.map(p => `<tr><td><span class="gx-name">${esc(p.name)}</span> <span class="small">${esc(SPORT_NAMES[p.sport] || p.sport)}</span></td><td class="n">${p.n}</td><td class="n">${p.w}–${p.l}</td><td class="n ${cls(p.net)}">${fmtU(p.net)}</td></tr>`).join("")
+    list.map(p => `<tr><td><span class="gx-name">${esc(p.name)}</span> <span class="small">${esc(gxSportLabel(p))}</span></td><td class="n">${p.n}</td><td class="n">${p.w}–${p.l}</td><td class="n ${cls(p.net)}">${fmtU(p.net)}</td></tr>`).join("")
     || '<tr><td colspan="4" class="muted">No players in this range</td></tr>'}</tbody>`;
   const byNet = [...players].sort((a, b) => b.net - a.net);
   lb("gxTop", byNet.slice(0, 10).filter(p => p.net > 0));
@@ -904,7 +907,7 @@ function gxDraw(t) {
 }
 function gxShowTip(s) {
   const tip = document.getElementById("gxTip"), p = s.p;
-  tip.innerHTML = `<b>${esc(p.name)}</b> · ${esc(SPORT_NAMES[p.sport] || p.sport)}<br>${p.n} pick${p.n === 1 ? "" : "s"} · ${p.w}–${p.l} · <span class="${cls(p.net)}">${fmtU(p.net)}</span> · ROI ${fmtP(p.roi)}<br><span class="small">${[...p.cappers].map(esc).join(", ")} · ${s.cl.name}</span>`;
+  tip.innerHTML = `<b>${esc(p.name)}</b> · ${esc(gxSportLabel(p))}<br>${p.n} pick${p.n === 1 ? "" : "s"} · ${p.w}–${p.l} · <span class="${cls(p.net)}">${fmtU(p.net)}</span> · ROI ${fmtP(p.roi)}<br><span class="small">${[...p.cappers].map(esc).join(", ")} · ${s.cl.name}</span>`;
   tip.hidden = false;
   const half = tip.offsetWidth / 2, W = gxSize.W;
   const below = s.y - s.r < tip.offsetHeight + 16;   // near the top edge the card drops below the star instead
