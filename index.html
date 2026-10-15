@@ -723,14 +723,17 @@ const TEAM_CODES = new Set("ATL BOS BKN CHA CHI CLE DAL DEN DET GSW HOU IND LAC 
 // Nicknames used in the sheet, so they join the player's other picks.
 const NICKNAMES = { AD: "Anthony Davis", AT: "Alyssa Thomas", KD: "Kevin Durant", PJ: "PJ Washington", CJ: "CJ McCollum", VJ: "VJ Edgecombe",
   OG: "OG Anunoby", JJ: "Jonquel Jones", CC: "Caitlin Clark", MAMU: "Mamukelashvili", PAIGE: "Paige Bueckers", BUECKERS: "Paige Bueckers",
-  CHELSEA: "Chelsea Gray", JONQUEL: "Jonquel Jones", KMITCH: "Kelsey Mitchell", "KMITCH ERROR": "Kelsey Mitchell", MO: "Monique Akoa-Makani", "AKOA MAKANI": "Monique Akoa-Makani" };
+  CHELSEA: "Chelsea Gray", JONQUEL: "Jonquel Jones", KMITCH: "Kelsey Mitchell", "KMITCH ERROR": "Kelsey Mitchell", MO: "Monique Akoa-Makani", "AKOA MAKANI": "Monique Akoa-Makani",
+  // League-specific: "WNBA:" covers WNBA, Unrivaled and FIBA; "NBA:" keeps an NFL "Daniels" separate.
+  "WNBA:CAITLIN": "Caitlin Clark", "WNBA:KELSEY": "Kelsey Mitchell", "WNBA:ZANDA": "Zandalasini",
+  "NBA:DANIELS": "Dyson Daniels", "NBA:DYSON": "Dyson Daniels", "NBA:MCDANIELS": "Jaden McDaniels" };
 // Multi-player DFS entries (Flex, F5, 4 Man, Power 3) don't name who's in them, so they stay off the map.
 const SKIP_ENTRY = /\b(Flex|F5|4 Man|P3|Power 3)\b/i;
 function playerOf(leg, teamPlay) {
   const toks = leg.split(/\s+/);
   while (toks.length && BOOK_TAGS.test(toks[toks.length - 1])) toks.pop();
   const name = [];
-  for (const t of toks) { if (LINE_TOKEN.test(t) || STAT_WORD.test(t)) break; name.push(t); }
+  for (const t of toks) { if (LINE_TOKEN.test(t) || STAT_WORD.test(t) || BOOK_TAGS.test(t)) break; name.push(t); }
   const rest = toks.slice(name.length);
   if (!name.length || name.length > 3 || !/^[A-ZÀ-Þ]/.test(name[0])) return null;
   if (rest.length && /^[+-]\d/.test(rest[0])) return null;           // spread: "Australia -18.5"
@@ -747,17 +750,18 @@ function playersIn(play) {
   return { legs: legs.length, players: legs.map(l => playerOf(l, teamPlay)).filter(Boolean) };
 }
 const pKey = (sport, name) => sport + "|" + name.toLowerCase().replace(/[^a-z0-9 -]/g, "");
-// Unrivaled is played by WNBA players, so the two leagues share one star per player.
-const SPORT_FAMILY = { UNR: "WNBA" };
+// Unrivaled and FIBA draw from the WNBA player pool, so those leagues share one star per player.
+const SPORT_FAMILY = { UNR: "WNBA", FIBA: "WNBA" };
 const gxSportLabel = p => [...p.sports].sort().map(s => SPORT_NAMES[s] || s).join(" · ");
 // Each player gets an even share of a pick's units (a 2-leg pick gives each leg half), and the pick's result.
 function playerStats(rows) {
   const map = new Map();
   for (const r of rows) {
     const { legs, players } = playersIn(r.play);
+    const fam = SPORT_FAMILY[r.sport] || r.sport;
     // Nicknames are basketball/football ones; in soccer "Chelsea" is the club, not Chelsea Gray.
-    for (const name of new Set(players.map(n => r.sport === "SOC" ? n : NICKNAMES[n.toUpperCase()] || n))) {
-      const fam = SPORT_FAMILY[r.sport] || r.sport, k = pKey(fam, name);
+    for (const name of new Set(players.map(n => r.sport === "SOC" ? n : NICKNAMES[fam + ":" + n.toUpperCase()] || NICKNAMES[n.toUpperCase()] || n))) {
+      const k = pKey(fam, name);
       let p = map.get(k);
       if (!p) map.set(k, p = { name, sport: fam, sports: new Set(), cappers: new Set(), n: 0, w: 0, l: 0, risk: 0, net: 0 });
       p.n++; p.cappers.add(r.capper); p.sports.add(r.sport); p.risk += r.risk / legs; p.net += r.net / legs;
