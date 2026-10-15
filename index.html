@@ -50,6 +50,7 @@ html { overflow-x: clip; } body { margin: 0; } img { max-width: 100%; } [hidden]
 :root[data-capper="sammy"]   { --accent: #ff3b5c; --accent-2: #ff9f1c; }
 :root[data-capper="quentin"] { --accent: #ffd60a; --accent-2: #ff6b00; }
 :root[data-capper="footy"]   { --accent: #d65bff; --accent-2: #ff4fa8; }
+:root[data-capper="galaxy"]  { --accent: #AFD7FA; --accent-2: #D68FBC; }
 *, *::before, *::after { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-variant-numeric: tabular-nums; font-size: 15px; line-height: 1.55; min-height: 100vh; overflow-x: clip;
   background-image:
@@ -209,6 +210,22 @@ td.num { font-family: var(--f-mono); font-size: .84rem; color: var(--ink-2); }
   font: 500 12px/1.2 var(--f-mono); color: #fff; background: oklch(11% 0.04 265 / .86); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   border: 1px solid color-mix(in oklch, var(--accent) 65%, transparent);
   box-shadow: 0 0 26px color-mix(in oklch, var(--accent) 30%, transparent), 0 10px 28px oklch(0% 0 0 / .45), inset 0 1px 0 oklch(100% 0 0 / .08); }
+#dash { display: contents; } #dash[hidden] { display: none; }
+.gx { gap: 22px; }
+.gx-card { padding-bottom: 18px; }
+.gx-count { margin-left: auto; letter-spacing: .06em; color: var(--ink-3); }
+.gx-card h3::before { background: var(--accent); }
+.gx-tools input { flex: 0 1 320px; }
+.gx-stage { position: relative; margin: 0 -20px; background: radial-gradient(ellipse 70% 60% at 50% 50%, oklch(20% 0.06 270 / .6), transparent 70%); overflow: hidden; }
+.gx-stage canvas { display: block; width: 100%; touch-action: pan-y; cursor: crosshair; }
+.gx-stage .tip { white-space: normal; line-height: 1.45; text-align: center; max-width: 260px; }
+.gx-legend { gap: 10px 18px; }
+.gx-legend b { color: var(--ink); font-weight: 600; margin-right: 4px; }
+.gx-note { color: var(--ink-3); }
+.gx-lb { margin: 0 -20px -14px; border: 0; box-shadow: none; background: none; border-radius: 0 0 24px 24px; }
+.gx-name { font-weight: 600; }
+.gx-how { margin: 0; max-width: 70ch; }
+:root[data-capper="galaxy"] h1.tinted { background-image: linear-gradient(90deg, #fff 0%, #AFD7FA 35%, #53A0C4 65%, #D68FBC 100%); }
 .legend { display: flex; gap: 16px; font-size: .84rem; color: var(--ink-2); flex-wrap: wrap; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
 
@@ -289,6 +306,22 @@ footer p { margin: 0; max-width: 60ch; }
   <div class="filters" id="sportFilters" role="group" aria-label="Filter by sport"></div>
   <div class="filters" id="dateFilters" role="group" aria-label="Filter by date"></div>
 
+  <section id="galaxySec" class="gx" hidden>
+    <div class="filters" id="gxCappers" role="group" aria-label="Filter by capper"></div>
+    <div class="card gx-card">
+      <h3>Player galaxy <span class="gx-count" id="gxCount"></span></h3>
+      <div class="log-tools gx-tools"><input id="gxQ" type="search" aria-label="Find a player" placeholder="Find a player"></div>
+      <div class="gx-stage" id="gxStage"><canvas id="gxCanvas" role="img" aria-label="Every player we've bet on, drawn as stars and grouped into clusters by net units. The leaderboards below list the top and bottom players."></canvas><div class="tip" id="gxTip" hidden></div></div>
+      <div class="legend gx-legend" id="gxLegend"></div>
+    </div>
+    <div class="charts">
+      <div class="card"><h3>Brightest stars</h3><div class="tbl-wrap gx-lb"><table id="gxTop"></table></div></div>
+      <div class="card"><h3>Deepest black holes</h3><div class="tbl-wrap gx-lb"><table id="gxBottom"></table></div></div>
+    </div>
+    <p class="small gx-how">Players are read from each pick's text. A pick with two players gives each of them half its units. Team bets like spreads, moneylines and totals aren't included.</p>
+  </section>
+
+  <div id="dash">
   <div class="board" id="board" aria-live="polite"></div>
 
   <section>
@@ -335,6 +368,7 @@ footer p { margin: 0; max-width: 60ch; }
     <div class="tbl-wrap"><table id="logTable"></table></div>
     <button class="more" id="more" type="button">Show more</button>
   </section>
+  </div>
 
   <footer>
     <svg class="skyline" viewBox="0 0 1200 340" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="smog" x1="0" y1="0" x2="0" y2="1"><stop offset=".2" stop-color="#ff8a3d" stop-opacity="0"/><stop offset=".62" stop-color="#c46a3a" stop-opacity=".22"/><stop offset="1" stop-color="#ff9a4a" stop-opacity=".38"/></linearGradient><linearGradient id="fogT" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5fa8c4" stop-opacity="0"/><stop offset="1" stop-color="#5fa8c4" stop-opacity=".22"/></linearGradient><linearGradient id="fogO" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a3d" stop-opacity="0"/><stop offset="1" stop-color="#ff8a3d" stop-opacity=".18"/></linearGradient><linearGradient id="holoG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7ff6ff"/><stop offset=".5" stop-color="#b9a7ff"/><stop offset="1" stop-color="#ff6ad5"/></linearGradient><linearGradient id="beamC" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#7ff6ff" stop-opacity=".5"/><stop offset="1" stop-color="#7ff6ff" stop-opacity="0"/></linearGradient><linearGradient id="beamP" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff6ad5" stop-opacity=".45"/><stop offset="1" stop-color="#ff6ad5" stop-opacity="0"/></linearGradient><pattern id="scan" width="6" height="3" patternUnits="userSpaceOnUse"><rect width="6" height="1.8" fill="#fff"/></pattern><mask id="scanM" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="340"><rect width="1200" height="340" fill="url(#scan)"/></mask><pattern id="rainP" width="60" height="40" patternUnits="userSpaceOnUse"><path d="M8 0l-3 12M31 14l-3 12M52 6l-3 12M20 26l-3 12M44 28l-3 12" stroke="#a9c8e0" stroke-width=".7"/></pattern><linearGradient id="rainF" x1="0" y1="0" x2="0" y2="1"><stop offset=".15" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#fff"/></linearGradient><mask id="rainM" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="340"><rect width="1200" height="340" fill="url(#rainF)"/></mask><filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="1200" height="340" fill="url(#smog)"/><path d="M-20 337V185H106V337ZM108 337V134H198V337ZM201 337V144H294V337ZM297 337V190H359V337ZM360 337V236H372V218H384V200H409V218H421V236H433V337ZM432 337V156L460 136H498L526 156V337ZM529 337V201H605V337ZM601 337V198H702V337ZM705 337V127H825V337ZM821 337L876 214H896L951 337ZM954 337V166H1019V337ZM1016 337L1044 141H1055L1083 337ZM1081 337V120H1185V337ZM1185 337L1227 168H1244L1286 337Z" fill="#1d2a3c" opacity=".85"/><path d="M9 195h2v3h-2zM81 203h2v3h-2zM27 219h2v3h-2zM99 227h2v3h-2zM-3 235h2v3h-2zM45 235h2v3h-2zM51 259h2v3h-2zM99 299h2v3h-2zM51 307h2v3h-2zM155 144h2v3h-2zM149 160h2v3h-2zM119 176h2v3h-2zM179 184h2v3h-2zM119 232h2v3h-2zM149 248h2v3h-2zM167 280h2v3h-2zM167 288h2v3h-2zM191 296h2v3h-2zM179 304h2v3h-2zM272 178h2v3h-2zM206 194h2v3h-2zM236 218h2v3h-2zM254 226h2v3h-2zM284 226h2v3h-2zM242 258h2v3h-2zM248 258h2v3h-2zM284 282h2v3h-2zM260 330h2v3h-2zM284 330h2v3h-2zM338 208h2v3h-2zM302 288h2v3h-2zM365 272h2v3h-2zM371 280h2v3h-2zM365 328h2v3h-2zM407 328h2v3h-2zM497 170h2v3h-2zM503 226h2v3h-2zM449 242h2v3h-2zM449 274h2v3h-2zM491 282h2v3h-2zM497 282h2v3h-2zM479 314h2v3h-2zM570 251h2v3h-2zM564 291h2v3h-2zM570 307h2v3h-2zM534 315h2v3h-2zM666 224h2v3h-2zM678 240h2v3h-2zM630 248h2v3h-2zM672 280h2v3h-2zM696 296h2v3h-2zM642 328h2v3h-2zM684 328h2v3h-2zM746 137h2v3h-2zM740 153h2v3h-2zM788 185h2v3h-2zM800 201h2v3h-2zM794 209h2v3h-2zM722 225h2v3h-2zM818 225h2v3h-2zM788 233h2v3h-2zM710 241h2v3h-2zM770 241h2v3h-2zM752 257h2v3h-2zM818 257h2v3h-2zM752 289h2v3h-2zM782 289h2v3h-2zM728 297h2v3h-2zM764 297h2v3h-2zM794 297h2v3h-2zM806 297h2v3h-2zM892 286h2v3h-2zM862 310h2v3h-2zM928 318h2v3h-2zM1013 176h2v3h-2zM1013 216h2v3h-2zM1057 285h2v3h-2zM1110 138h2v3h-2zM1128 138h2v3h-2zM1164 186h2v3h-2zM1104 202h2v3h-2zM1110 234h2v3h-2zM1152 234h2v3h-2zM1116 258h2v3h-2zM1128 274h2v3h-2zM1104 306h2v3h-2zM1152 314h2v3h-2zM1164 314h2v3h-2zM1104 322h2v3h-2zM1232 264h2v3h-2zM1220 272h2v3h-2zM1256 280h2v3h-2z" fill="#ffb070" opacity=".35"/><rect y="150" width="1200" height="190" fill="url(#fogT)"/><path d="M-20 337V204H11V337ZM13 337V241L34 221H61L82 241V337ZM81 337V150H153V337ZM151 337V243L172 223H201L222 243V337ZM271 337V229H329V337ZM329 337V226L343 206H361L375 226V337ZM378 337V231H387V213H396V195H416V213H425V231H434V337ZM435 337V195H489V337ZM491 337V219H540V337ZM564 337V219H636V337ZM633 337V237H671V337ZM665 337V227L676 207H690L700 227V337ZM695 337V263L713 243H736L754 263V337ZM750 337V230H783V337ZM777 337V238H789V220H801V202H830V220H842V238H854V337ZM857 337V157H903V337ZM902 337V234L918 214H940L957 234V337ZM960 337V249L972 229H988L1000 249V337ZM995 337V219H1006V201H1017V183H1042V201H1053V219H1064V337ZM1067 337V208L1078 188H1093L1104 208V337ZM1098 337V244H1152V337ZM1154 337V230H1213V337ZM1208 337V204L1220 184H1237L1249 204V337Z" fill="#0d1726"/><g class="win" opacity=".75"><path d="M-3 230h2v3h-2zM-15 294h2v3h-2zM18 247h2v3h-2zM24 255h2v3h-2zM72 319h2v3h-2zM104 176h2v3h-2zM128 200h2v3h-2zM128 232h2v3h-2zM134 232h2v3h-2zM146 256h2v3h-2zM104 272h2v3h-2zM110 304h2v3h-2zM146 312h2v3h-2zM174 233h2v3h-2zM156 249h2v3h-2zM186 289h2v3h-2zM186 305h2v3h-2zM216 329h2v3h-2zM346 288h2v3h-2zM407 323h2v3h-2zM452 245h2v3h-2zM470 285h2v3h-2zM458 301h2v3h-2zM440 317h2v3h-2zM452 325h2v3h-2zM514 317h2v3h-2zM623 245h2v3h-2zM569 261h2v3h-2zM569 293h2v3h-2zM623 293h2v3h-2zM629 309h2v3h-2zM650 295h2v3h-2zM700 293h2v3h-2zM706 301h2v3h-2zM913 272h2v3h-2zM925 280h2v3h-2zM1036 303h2v3h-2zM1096 214h2v3h-2zM1072 310h2v3h-2zM1159 240h2v3h-2zM1189 264h2v3h-2zM1207 272h2v3h-2zM1219 202h2v3h-2zM1237 242h2v3h-2zM1237 298h2v3h-2z" fill="#ffb070"/><path d="M-15 318h2v3h-2zM42 239h2v3h-2zM48 263h2v3h-2zM110 296h2v3h-2zM210 233h2v3h-2zM180 257h2v3h-2zM174 265h2v3h-2zM216 265h2v3h-2zM312 311h2v3h-2zM358 232h2v3h-2zM340 296h2v3h-2zM401 251h2v3h-2zM419 259h2v3h-2zM383 291h2v3h-2zM440 269h2v3h-2zM496 261h2v3h-2zM520 269h2v3h-2zM526 293h2v3h-2zM532 293h2v3h-2zM623 229h2v3h-2zM581 237h2v3h-2zM682 289h2v3h-2zM694 305h2v3h-2zM730 261h2v3h-2zM712 269h2v3h-2zM724 293h2v3h-2zM730 317h2v3h-2zM767 280h2v3h-2zM782 290h2v3h-2zM812 298h2v3h-2zM782 306h2v3h-2zM842 322h2v3h-2zM886 167h2v3h-2zM886 239h2v3h-2zM874 247h2v3h-2zM907 256h2v3h-2zM983 239h2v3h-2zM1042 223h2v3h-2zM1042 279h2v3h-2zM1042 303h2v3h-2zM1084 278h2v3h-2zM1201 240h2v3h-2zM1177 248h2v3h-2zM1195 272h2v3h-2zM1195 288h2v3h-2zM1237 194h2v3h-2zM1219 290h2v3h-2z" fill="#ffd9a8"/><path d="M3 270h2v3h-2zM24 263h2v3h-2zM92 200h2v3h-2zM122 232h2v3h-2zM140 240h2v3h-2zM98 328h2v3h-2zM210 273h2v3h-2zM180 321h2v3h-2zM312 319h2v3h-2zM346 304h2v3h-2zM425 283h2v3h-2zM440 253h2v3h-2zM605 237h2v3h-2zM611 285h2v3h-2zM670 265h2v3h-2zM694 321h2v3h-2zM706 309h2v3h-2zM818 330h2v3h-2zM862 183h2v3h-2zM874 191h2v3h-2zM868 295h2v3h-2zM874 327h2v3h-2zM913 312h2v3h-2zM989 295h2v3h-2zM1012 231h2v3h-2zM1036 231h2v3h-2zM1006 239h2v3h-2zM1030 255h2v3h-2zM1036 271h2v3h-2zM1096 294h2v3h-2zM1090 326h2v3h-2zM1139 254h2v3h-2zM1139 286h2v3h-2zM1177 304h2v3h-2zM1159 312h2v3h-2zM1201 312h2v3h-2zM1243 282h2v3h-2zM1243 306h2v3h-2z" fill="#7fd6ff"/></g><g class="beacon" fill="#ff3b3b" filter="url(#glow)"><circle cx="117" cy="148" r="1.6"/><circle cx="880" cy="155" r="1.6"/><circle cx="1228" cy="182" r="1.6"/></g><rect y="200" width="1200" height="140" fill="url(#fogO)"/><path d="M-20 337V291H35V337ZM35 337V279L47 259H63L75 279V337ZM98 337V245H202V337ZM205 337V267H265V337ZM261 337V266H315V337ZM316 337V277L337 257H366L387 277V337ZM388 337V278L414 258H450L476 278V337ZM470 337V252H560V337ZM562 337V306L584 286H612L634 306V337ZM635 337V253H686V337ZM682 337V289H764V337ZM761 337V255H832V337ZM828 337V263L845 243H869L886 263V337ZM886 337V296L909 276H940L963 296V337ZM1008 337V233H1072V337ZM1073 337V233H1143V337ZM1140 337V261H1194V337ZM1194 337V297H1251V337Z" fill="#050a14"/><g fill="none" stroke-width="1.4" opacity=".7" filter="url(#glow)"><path d="M682 289H764" stroke="#ffb070"/><path d="M1073 233H1143" stroke="#ff6ad5"/><path d="M1140 261H1194" stroke="#ffb070"/></g><g class="win" opacity=".8"><path d="M27 317h2v3h-2zM46 285h2v3h-2zM115 255h2v3h-2zM175 279h2v3h-2zM240 301h2v3h-2zM327 307h2v3h-2zM363 307h2v3h-2zM435 276h2v3h-2zM465 292h2v3h-2zM417 324h2v3h-2zM475 302h2v3h-2zM553 310h2v3h-2zM553 326h2v3h-2zM603 320h2v3h-2zM717 299h2v3h-2zM808 273h2v3h-2zM772 289h2v3h-2zM839 253h2v3h-2zM927 318h2v3h-2zM1049 267h2v3h-2zM1055 291h2v3h-2zM1132 243h2v3h-2zM1090 259h2v3h-2zM1090 267h2v3h-2zM1096 315h2v3h-2zM1078 323h2v3h-2zM1175 327h2v3h-2z" fill="#ffb070"/><path d="M-15 301h2v3h-2zM40 309h2v3h-2zM103 263h2v3h-2zM157 271h2v3h-2zM169 279h2v3h-2zM151 311h2v3h-2zM234 277h2v3h-2zM222 317h2v3h-2zM272 324h2v3h-2zM351 283h2v3h-2zM375 283h2v3h-2zM381 291h2v3h-2zM333 323h2v3h-2zM411 292h2v3h-2zM499 302h2v3h-2zM567 304h2v3h-2zM603 304h2v3h-2zM640 327h2v3h-2zM699 299h2v3h-2zM875 293h2v3h-2zM897 294h2v3h-2zM915 310h2v3h-2zM1013 291h2v3h-2zM1120 291h2v3h-2zM1157 279h2v3h-2zM1175 279h2v3h-2zM1151 303h2v3h-2zM1217 307h2v3h-2z" fill="#7fd6ff"/><path d="M-3 325h2v3h-2zM46 309h2v3h-2zM151 271h2v3h-2zM222 277h2v3h-2zM234 285h2v3h-2zM258 301h2v3h-2zM216 309h2v3h-2zM272 300h2v3h-2zM411 268h2v3h-2zM417 308h2v3h-2zM393 324h2v3h-2zM505 270h2v3h-2zM597 312h2v3h-2zM579 328h2v3h-2zM640 319h2v3h-2zM790 297h2v3h-2zM766 313h2v3h-2zM1061 315h2v3h-2zM1102 243h2v3h-2zM1132 259h2v3h-2z" fill="#ff6ad5"/></g><g mask="url(#rainM)"><g class="rain" opacity=".16"><rect y="-40" width="1200" height="380" fill="url(#rainP)"/></g></g><g class="holos"><path d="M595 219L450 185H750L605 219Z" fill="url(#beamC)" opacity=".7"/><g class="holo h1" filter="url(#glow)"><g mask="url(#scanM)"><text x="600" y="175" text-anchor="middle" font-size="64" textLength="300" lengthAdjust="spacingAndGlyphs" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900" fill="url(#holoG)" fill-opacity=".62" stroke="#c9fbff" stroke-opacity=".55" stroke-width=".8">NOTIFY</text><text x="600" y="191" text-anchor="middle" font-size="11" textLength="200" lengthAdjust="spacingAndGlyphs" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900" fill="#c9fbff" fill-opacity=".7" letter-spacing="3">EVERY PICK, GRADED</text></g></g><path d="M296 229L264 199H336L304 229Z" fill="url(#beamP)" opacity=".7"/><g class="holo h2"><g mask="url(#scanM)"><image href="notify-logo.png" x="266" y="131" width="68" height="68" style="filter: hue-rotate(45deg) saturate(.75) brightness(1.15) drop-shadow(0 0 4px #7ff6ff); opacity: .72"/></g></g><g class="holo h3" filter="url(#glow)"><g mask="url(#scanM)"><rect x="907" y="173" width="22" height="122" fill="#ff6ad5" fill-opacity=".14" stroke="#ff6ad5" stroke-opacity=".6"/><g fill="#ffb3ea" fill-opacity=".8"><text x="918" y="193" text-anchor="middle" font-size="16" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900">N</text><text x="918" y="212" text-anchor="middle" font-size="16" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900">O</text><text x="918" y="231" text-anchor="middle" font-size="16" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900">T</text><text x="918" y="250" text-anchor="middle" font-size="16" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900">I</text><text x="918" y="269" text-anchor="middle" font-size="16" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900">F</text><text x="918" y="288" text-anchor="middle" font-size="16" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900">Y</text></g></g></g><g class="holo h4" filter="url(#glow)"><g mask="url(#scanM)"><rect x="106" y="257" width="88" height="24" fill="#7ff6ff" fill-opacity=".12" stroke="#7ff6ff" stroke-opacity=".6"/><text x="150.0" y="274" text-anchor="middle" font-size="12" textLength="74" lengthAdjust="spacingAndGlyphs" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900" fill="#c9fbff" fill-opacity=".85">NOTIFY PICKS</text></g></g><path d="M1037 233L978 211H1102L1043 233Z" fill="url(#beamC)" opacity=".6"/><g class="holo h5" filter="url(#glow)"><g mask="url(#scanM)"><rect x="974" y="177" width="132" height="34" fill="#b9a7ff" fill-opacity=".14" stroke="#c9fbff" stroke-opacity=".55"/><text x="1040" y="199" text-anchor="middle" font-size="15" textLength="112" lengthAdjust="spacingAndGlyphs" font-family="Archivo Black, Archivo, system-ui, sans-serif" font-weight="900" fill="url(#holoG)" fill-opacity=".85">GET NOTIFIED</text></g></g></g><rect x="-20" y="335.5" width="1240" height="3" fill="#22e6ff" filter="url(#glow)"/><rect x="-20" y="338.5" width="1240" height="10" fill="#000210"/></svg>
@@ -423,19 +457,20 @@ function niceTicks(min, max, count) {
 }
 
 /* ---------- State ---------- */
-let ALL = [], sport = "All", capper = "All", shown = 25, period = "all", cumSel = null;
+let galaxy = false, ALL = [], sport = "All", capper = "All", shown = 25, period = "all", cumSel = null;
 const TEAM = "All";
 const TAB_COLORS = { team: "#D68FBC", caleb: "#39ff88", sammy: "#ff3b5c", quentin: "#ffd60a", footy: "#d65bff" };
 const slug = c => c.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 function capperFromHash() {
   const h = decodeURIComponent(location.hash.slice(1)).toLowerCase();
+  galaxy = h === "galaxy";
   const hit = SOURCES.find(s => slug(s.capper) === h);
   return hit ? hit.capper : TEAM;
 }
 function renderTabs() {
   const items = [TEAM, ...SOURCES.map(s => s.capper)];
   const box = document.getElementById("tabs");
-  box.innerHTML = items.map(c => `<a class="tab${c === TEAM ? " team" : ""}" style="--tab-c:${TAB_COLORS[c === TEAM ? "team" : slug(c)] || "var(--accent)"}" role="tab" href="#${c === TEAM ? "team" : slug(c)}" aria-selected="${c === capper}">${c === TEAM ? "Notify" : esc(c)}</a>`).join("");
+  box.innerHTML = items.map(c => `<a class="tab${c === TEAM ? " team" : ""}" style="--tab-c:${TAB_COLORS[c === TEAM ? "team" : slug(c)] || "var(--accent)"}" role="tab" href="#${c === TEAM ? "team" : slug(c)}" aria-selected="${!galaxy && c === capper}">${c === TEAM ? "Notify" : esc(c)}</a>`).join("") + `<a class="tab gx-tab" style="--tab-c:#AFD7FA" role="tab" href="#galaxy" aria-selected="${galaxy}">Galaxy</a>`;
 }
 // Capper bios shown under the big name on each personal tab, with a link to their own subscription.
 const BIOS = {
@@ -446,6 +481,14 @@ const BIOS = {
 };
 function renderHeader() {
   const team = capper === TEAM;
+  if (galaxy) {
+    document.documentElement.setAttribute("data-capper", "galaxy");
+    document.getElementById("title").textContent = "Galaxy";
+    document.getElementById("eyebrow").textContent = "Notify · Every player we've bet on";
+    document.getElementById("blurb").textContent = "Each star is a player we've picked. Bigger stars got more picks, and players are grouped by how many units they've won or lost for us.";
+    document.title = "Galaxy · Notify Pick Tracker";
+    return;
+  }
   document.documentElement.setAttribute("data-capper", team ? "team" : slug(capper));
   document.getElementById("title").textContent = team ? "Notify" : capper;
   document.getElementById("eyebrow").textContent = team ? `Notify team results · ${SOURCES.map(s => s.capper).join(", ")}` : "Notify capper · Personal results";
@@ -636,10 +679,10 @@ const FLOAT_PICK = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
 const FLOAT_TILT = ["-6deg", "5deg", "-3deg", "6deg", "-5deg", "3deg"];
 let floatsFor = null;
 function renderFloats() {
-  const key = capper + ":" + ALL.length;
+  const key = (galaxy ? "galaxy" : capper) + ":" + ALL.length;
   if (floatsFor === key) return;
   floatsFor = key;
-  const list = capper === TEAM ? TEAM_FLOATS : [...new Set(byCapper().map(r => r.sport))].filter(s => SPORT_LOGOS[s]).sort().flatMap(s => SPORT_LOGOS[s]);
+  const list = galaxy ? [] : capper === TEAM ? TEAM_FLOATS : [...new Set(byCapper().map(r => r.sport))].filter(s => SPORT_LOGOS[s]).sort().flatMap(s => SPORT_LOGOS[s]);
   const nLeft = Math.ceil(list.length / 2), n = list.length;
   const tile = (s, i) => {
     const left = i < nLeft, k = left ? i : i - nLeft, per = left ? nLeft : n - nLeft;
@@ -670,9 +713,233 @@ function orbitIn() {
     el.animate(frames, { duration: 1600, delay: i * 60, easing: "linear", fill: "backwards", id: "orbit" });
   });
 }
+/* ---------- Galaxy: every player we've bet on, as a star ---------- */
+// Player names come from the free-text Play column. Team bets (spreads, MLs, totals, futures) are left out.
+const LEG_SPLIT = /\s*(?:\/|\s\+\s|\sw\/\s|\sH2H\s|\s&\s|,)\s*/i;
+const BOOK_TAGS = /^(PB|DK|PP|FD|UD|MGM|CZR|ESPN|Lotto|Entries|Combo|Rebet|Adj\.?|Books?|Boost(ed)?|SGP)$/i;
+const STAT_WORD = /^(entries|combo|rebet|pts?|reb|rebs|ast|asts|pra|pr|pa|ra|3pm|3s|threes|td|dd|tackles?|shots?|sot|passes|pass|slips|parlay|goals?|anytime|assists?|saves|fouls|cards?|rush|rec|receptions|yards|lotto|champ|blk|stl|stocks|fs|h2h)$/i;
+const LINE_TOKEN = /^([ouOU]\d|[OU]$|\d|[+-]\d)/;
+const TEAM_CODES = new Set("ATL BOS BKN CHA CHI CLE DAL DEN DET GSW HOU IND LAC LAL MEM MIA MIL MIN NOP NYK OKC ORL PHI PHX POR SAC SAS TOR UTA WAS WSH NYL LVA LV CON SEA PHO LAS GSV USA".split(" "));
+function playerOf(leg, teamPlay) {
+  const toks = leg.split(/\s+/);
+  while (toks.length && BOOK_TAGS.test(toks[toks.length - 1])) toks.pop();
+  const name = [];
+  for (const t of toks) { if (LINE_TOKEN.test(t) || STAT_WORD.test(t)) break; name.push(t); }
+  const rest = toks.slice(name.length);
+  if (!name.length || name.length > 3 || !/^[A-ZÀ-Þ]/.test(name[0])) return null;
+  if (rest.length && /^[+-]\d/.test(rest[0])) return null;           // spread: "Australia -18.5"
+  if (!rest.length && teamPlay) return null;                          // bare name inside a team bet: "Newcastle/Barca o3.25 Total"
+  if (/\b(ML|DBL|Total|Flex)\b|\bto (QF|SF|win|make|advance)\b|^\[/i.test(leg)) return null;
+  if (name.length === 1 && TEAM_CODES.has(name[0])) return null;      // team codes like SAS, WSH
+  if (/^(Over|Under|Parlay|Team|Game|Draw|Both)$/i.test(name[0])) return null;
+  return name.join(" ").replace(/\s+(Jr|Sr)\.?$/i, " Jr.");
+}
+function playersIn(play) {
+  const legs = play.split(LEG_SPLIT).map(s => s.trim()).filter(Boolean);
+  const teamPlay = /\b(ML|DBL|Total|to (QF|SF|win|make|advance))\b|\s[+-]\d/i.test(play);
+  return { legs: legs.length, players: legs.map(l => playerOf(l, teamPlay)).filter(Boolean) };
+}
+const pKey = (sport, name) => sport + "|" + name.toLowerCase().replace(/[^a-z0-9 -]/g, "");
+// Each player gets an even share of a pick's units (a 2-leg pick gives each leg half), and the pick's result.
+function playerStats(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    const { legs, players } = playersIn(r.play);
+    for (const name of new Set(players)) {
+      const k = pKey(r.sport, name);
+      let p = map.get(k);
+      if (!p) map.set(k, p = { name, sport: r.sport, cappers: new Set(), n: 0, w: 0, l: 0, risk: 0, net: 0 });
+      p.n++; p.cappers.add(r.capper); p.risk += r.risk / legs; p.net += r.net / legs;
+      if (r.res === "W") p.w++; else if (r.res === "L") p.l++;
+    }
+  }
+  // "Hurts" and "Jalen Hurts" in the same sport are one player when the last name matches exactly one full name.
+  const list = [...map.values()];
+  for (const p of list.filter(p => !p.name.includes(" "))) {
+    const full = list.filter(q => q !== p && q.sport === p.sport && q.name.includes(" ") && q.name.split(" ").pop().toLowerCase() === p.name.toLowerCase());
+    if (full.length !== 1) continue;
+    const q = full[0];
+    q.n += p.n; q.w += p.w; q.l += p.l; q.risk += p.risk; q.net += p.net; p.cappers.forEach(c => q.cappers.add(c)); p.merged = true;
+  }
+  return list.filter(p => !p.merged).map(p => ({ ...p, roi: p.risk ? p.net / p.risk : 0 }));
+}
+const GX_TIERS = [
+  { k: "nova",  name: "Supernovas",  desc: "+3u or more",      test: v => v >= 3,            color: "#7dffb8", glow: "57,255,136" },
+  { k: "rise",  name: "Rising stars", desc: "+0.5u to +3u",    test: v => v >= 0.5 && v < 3, color: "#3ee08f", glow: "62,224,143" },
+  { k: "drift", name: "Drifters",    desc: "within ±0.5u",     test: v => v > -0.5 && v < 0.5, color: "#AFD7FA", glow: "175,215,250" },
+  { k: "fade",  name: "Fading",      desc: "−0.5u to −3u",     test: v => v <= -0.5 && v > -3, color: "#ff8a8a", glow: "255,110,110" },
+  { k: "hole",  name: "Black holes", desc: "−3u or worse",     test: v => v <= -3,           color: "#ff4d6a", glow: "255,77,106" },
+];
+let gxCap = "All", gxStars = [], gxClusters = [], gxRaf = 0, gxT0 = 0, gxHover = null, gxQuery = "", gxBg = null, gxSize = null;
+const gxReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+function gxRows() { return view().filter(r => gxCap === "All" || r.capper === gxCap); }
+function renderGalaxy() {
+  const caps = SOURCES.map(s => s.capper);
+  const cbox = document.getElementById("gxCappers");
+  cbox.innerHTML = '<span class="lbl">Capper</span>' + ["All", ...caps].map(c => `<button class="chip" type="button" aria-pressed="${c === gxCap}" data-c="${esc(c)}">${c === "All" ? "Everyone" : esc(c)}</button>`).join("");
+  cbox.querySelectorAll(".chip").forEach(b => b.onclick = () => { gxCap = b.dataset.c; renderGalaxy(); });
+  const players = playerStats(gxRows());
+  document.getElementById("gxCount").textContent = `${players.length} players`;
+  // Within a cluster the biggest movers sit at the core; drifters are ordered by how often we bet them.
+  gxClusters = GX_TIERS.map(t => {
+    const ps = players.filter(p => t.test(p.net)).sort((a, b) => t.k === "drift" ? b.n - a.n : Math.abs(b.net) - Math.abs(a.net));
+    return { ...t, players: ps, net: ps.reduce((s, p) => s + p.net, 0) };
+  });
+  document.getElementById("gxLegend").innerHTML = gxClusters.map(c => `<span><i style="background:${c.color};box-shadow:0 0 8px ${c.color}"></i><b>${c.name}</b> ${c.desc} · ${c.players.length}</span>`).join("")
+    + '<span class="gx-note">Bigger stars got more picks</span>';
+  const lb = (id, list) => document.getElementById(id).innerHTML = `<thead><tr><th>Player</th><th class="n">Picks</th><th class="n">Record</th><th class="n">Net units</th></tr></thead><tbody>${
+    list.map(p => `<tr><td><span class="gx-name">${esc(p.name)}</span> <span class="small">${esc(SPORT_NAMES[p.sport] || p.sport)}</span></td><td class="n">${p.n}</td><td class="n">${p.w}–${p.l}</td><td class="n ${cls(p.net)}">${fmtU(p.net)}</td></tr>`).join("")
+    || '<tr><td colspan="4" class="muted">No players in this range</td></tr>'}</tbody>`;
+  const byNet = [...players].sort((a, b) => b.net - a.net);
+  lb("gxTop", byNet.slice(0, 10).filter(p => p.net > 0));
+  lb("gxBottom", byNet.slice(-10).reverse().filter(p => p.net < 0));
+  gxSize = null; gxLayout(); gxStart();
+}
+function gxLayout() {
+  const canvas = document.getElementById("gxCanvas"), stage = document.getElementById("gxStage");
+  const W = stage.clientWidth; if (!W) return;
+  const vertical = W < 640;
+  const live = gxClusters.filter(c => c.players.length);
+  // Phyllotaxis spacing: a cluster of N stars has radius c·√N; pick c so every cluster fits the stage.
+  const extra = cl => cl.players.length + (cl.k === "hole" ? 10 : 0);   // black holes keep an empty core
+  const sq = live.map(cl => Math.sqrt(extra(cl)));
+  const gap = vertical ? 70 : 28;
+  let c = vertical ? (W * 0.86) / (2 * Math.max(...sq, 1)) : Math.min((W - gap * (live.length + 1)) / (2 * sq.reduce((a, b) => a + b, 0) || 1), 170 / Math.max(...sq, 1));
+  c = Math.max(4.2, Math.min(c, 11));
+  const MIN_R = vertical ? 46 : 52;
+  const spread = cl => Math.max(c, MIN_R / Math.sqrt(extra(cl)));   // small clusters spread out so they don't read as specks
+  const radius = cl => spread(cl) * Math.sqrt(extra(cl));
+  // Losing clusters on the left (bottom on phones), winners on the right (top).
+  const order = vertical ? [...live] : [...live].reverse();
+  const H = vertical ? Math.round(order.reduce((a, cl) => a + 2 * radius(cl) + gap, 20)) : Math.round(2 * Math.max(...order.map(radius)) + 120);
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.height = H + "px";
+  gxSize = { W, H, dpr, vertical };
+  const slack = (W - order.reduce((a, cl) => a + 2 * radius(cl), 0)) / (order.length + 1);
+  let cursor = vertical ? 40 : slack;
+  gxStars = [];
+  order.forEach((cl, i) => {
+    cl.R = radius(cl);
+    if (vertical) { cl.cx = W / 2; cl.cy = cursor + cl.R; cursor += 2 * cl.R + gap; }
+    else { cl.cx = cursor + cl.R; cl.cy = H / 2 + 22 + (i % 2 ? -10 : 10); cursor += 2 * cl.R + slack; }
+    const skip = cl.k === "hole" ? 10 : 0;
+    const maxN = Math.max(...cl.players.map(p => p.n));
+    cl.players.forEach((p, j) => {
+      const idx = j + skip + 0.5, rho = spread(cl) * Math.sqrt(idx), th = idx * 2.39996323;
+      const mag = Math.min(1, Math.abs(p.net) / 6);
+      gxStars.push({ p, cl, rho, th, r: Math.min(1.1 + 1.5 * Math.sqrt(p.n), 9) * (vertical ? 0.9 : 1), a: 0.55 + 0.45 * (cl.k === "drift" ? p.n / maxN : mag), tw: Math.random() * 6.28, x: 0, y: 0 });
+    });
+  });
+  gxClusters = gxClusters.map(cl => order.find(o => o.k === cl.k) || cl);
+  gxBg = gxBackdrop(W, H, dpr);
+}
+function gxBackdrop(W, H, dpr) {
+  const off = document.createElement("canvas"); off.width = W * dpr; off.height = H * dpr;
+  const g = off.getContext("2d"); g.scale(dpr, dpr);
+  let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < W * H / 900; i++) { g.fillStyle = `rgba(200,220,255,${0.08 + rnd() * 0.3})`; g.fillRect(rnd() * W, rnd() * H, rnd() < 0.9 ? 1 : 1.6, rnd() < 0.9 ? 1 : 1.6); }
+  for (const cl of gxClusters) {
+    if (!cl.players.length) continue;
+    const neb = g.createRadialGradient(cl.cx, cl.cy, 0, cl.cx, cl.cy, cl.R * 1.6);
+    neb.addColorStop(0, `rgba(${cl.glow},${cl.k === "hole" ? 0.05 : 0.2})`); neb.addColorStop(0.5, `rgba(${cl.glow},0.07)`); neb.addColorStop(1, `rgba(${cl.glow},0)`);
+    g.fillStyle = neb; g.beginPath(); g.ellipse(cl.cx, cl.cy, cl.R * 1.6, cl.R * 1.6, 0, 0, 6.29); g.fill();
+    if (cl.k === "hole") {
+      const core = cl.R * 0.3 + 6;
+      const ring = g.createRadialGradient(cl.cx, cl.cy, core * 0.7, cl.cx, cl.cy, core * 1.9);
+      ring.addColorStop(0, "rgba(0,0,0,1)"); ring.addColorStop(0.42, "rgba(0,0,0,1)"); ring.addColorStop(0.5, "rgba(255,140,90,.75)"); ring.addColorStop(0.62, "rgba(255,77,106,.35)"); ring.addColorStop(1, "rgba(255,77,106,0)");
+      g.fillStyle = ring; g.beginPath(); g.arc(cl.cx, cl.cy, core * 1.9, 0, 6.29); g.fill();
+    }
+    const top = gxSize.vertical ? cl.cy - cl.R - 18 : Math.min(cl.cy - cl.R - 18, H - 30);
+    g.textAlign = "center"; g.font = "800 12px Archivo, system-ui, sans-serif"; g.fillStyle = cl.color;
+    g.fillText(cl.name.toUpperCase(), cl.cx, Math.max(16, top));
+    g.font = "500 11px Archivo, system-ui, sans-serif"; g.fillStyle = "rgba(200,215,240,.75)";
+    g.fillText(`${cl.players.length} · ${fmtU(cl.net)}`, cl.cx, Math.max(30, top + 15));
+  }
+  return off;
+}
+function gxDraw(t) {
+  const canvas = document.getElementById("gxCanvas"); if (!gxSize) return;
+  const { W, H, dpr } = gxSize, g = canvas.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  if (gxBg) g.drawImage(gxBg, 0, 0, W, H);
+  const q = gxQuery;
+  // Inner stars orbit faster than outer ones, like a real galaxy.
+  for (const s of gxStars) {
+    const ang = s.th + t * 0.00006 / (0.35 + s.rho / s.cl.R);
+    s.x = s.cl.cx + Math.cos(ang) * s.rho; s.y = s.cl.cy + Math.sin(ang) * s.rho * 0.92;
+    const match = !q || s.p.name.toLowerCase().includes(q);
+    const tw = gxReduced() ? 1 : 0.8 + 0.2 * Math.sin(t * 0.002 + s.tw);
+    g.globalAlpha = (match ? s.a : 0.12) * tw;
+    const rr = s.r * (s === gxHover || (q && match) ? 1.6 : 1);
+    const halo = g.createRadialGradient(s.x, s.y, 0, s.x, s.y, rr * 3);
+    halo.addColorStop(0, `rgba(${s.cl.glow},.55)`); halo.addColorStop(1, `rgba(${s.cl.glow},0)`);
+    g.fillStyle = halo; g.beginPath(); g.arc(s.x, s.y, rr * 3, 0, 6.29); g.fill();
+    g.fillStyle = s.cl.color; g.beginPath(); g.arc(s.x, s.y, rr, 0, 6.29); g.fill();
+    g.fillStyle = "#fff"; g.globalAlpha *= 0.85; g.beginPath(); g.arc(s.x, s.y, rr * 0.38, 0, 6.29); g.fill();
+  }
+  g.globalAlpha = 1;
+  // Name the three brightest Supernovas and the three deepest Black holes.
+  g.font = "600 11px Archivo, system-ui, sans-serif"; g.textAlign = "left";
+  for (const cl of gxClusters) {
+    if ((cl.k !== "nova" && cl.k !== "hole") || q) continue;
+    const placed = [];
+    gxStars.filter(s => s.cl === cl).slice(0, 3).forEach(s => {
+      const label = s.p.name, w = g.measureText(label).width + 8;
+      let x = s.x + s.r + 4; if (x + w > W - 4) x = s.x - s.r - 4 - w;
+      const box = [x, s.y - 8, w, 15];
+      if (placed.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + 15 && box[1] < b[1] + 15)) return;
+      placed.push(box);
+      g.fillStyle = "rgba(10,14,32,.7)"; g.fillRect(...box); g.fillStyle = cl.color; g.fillText(label, x + 4, s.y + 3);
+    });
+  }
+  if (gxHover) gxShowTip(gxHover);
+}
+function gxShowTip(s) {
+  const tip = document.getElementById("gxTip"), p = s.p;
+  tip.innerHTML = `<b>${esc(p.name)}</b> · ${esc(SPORT_NAMES[p.sport] || p.sport)}<br>${p.n} pick${p.n === 1 ? "" : "s"} · ${p.w}–${p.l} · <span class="${cls(p.net)}">${fmtU(p.net)}</span> · ROI ${fmtP(p.roi)}<br><span class="small">${[...p.cappers].map(esc).join(", ")} · ${s.cl.name}</span>`;
+  tip.hidden = false;
+  const half = tip.offsetWidth / 2, W = gxSize.W;
+  const below = s.y - s.r < tip.offsetHeight + 16;   // near the top edge the card drops below the star instead
+  tip.style.transform = below ? "translate(-50%, 12px)" : "";
+  tip.style.left = Math.max(half, Math.min(W - half, s.x)) + "px"; tip.style.top = (below ? s.y + s.r : s.y - s.r) + "px";
+}
+function gxPick(e) {
+  const r = e.currentTarget.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  let best = null, bd = 18 * 18;
+  for (const s of gxStars) { const d = (s.x - x) ** 2 + (s.y - y) ** 2; if (d < bd && (!gxQuery || s.p.name.toLowerCase().includes(gxQuery))) { bd = d; best = s; } }
+  gxHover = best;
+  if (!best) document.getElementById("gxTip").hidden = true;
+  if (gxReduced()) gxDraw(0);
+}
+function gxStart() {
+  cancelAnimationFrame(gxRaf);
+  if (!gxSize) return;
+  if (gxReduced()) { gxDraw(0); return; }
+  const loop = t => { gxDraw(t); gxRaf = requestAnimationFrame(loop); };
+  gxRaf = requestAnimationFrame(loop);
+}
+function gxStop() { cancelAnimationFrame(gxRaf); gxRaf = 0; }
+function setupGalaxy() {
+  const canvas = document.getElementById("gxCanvas");
+  canvas.addEventListener("pointermove", gxPick); canvas.addEventListener("pointerdown", gxPick);
+  canvas.addEventListener("pointerleave", () => { gxHover = null; document.getElementById("gxTip").hidden = true; if (gxReduced()) gxDraw(0); });
+  document.getElementById("gxQ").addEventListener("input", e => {
+    gxQuery = e.target.value.trim().toLowerCase(); gxHover = null;
+    const hits = gxQuery ? gxStars.filter(s => s.p.name.toLowerCase().includes(gxQuery)) : [];
+    if (hits.length === 1) gxHover = hits[0]; else document.getElementById("gxTip").hidden = true;
+    if (gxReduced()) gxDraw(0);
+  });
+  let w = 0;
+  new ResizeObserver(() => { const nw = document.getElementById("gxStage").clientWidth; if (galaxy && nw && nw !== w) { w = nw; gxLayout(); gxStart(); } }).observe(document.getElementById("gxStage"));
+}
 function renderAll() {
   const rows = view();
-  renderTabs(); renderHeader(); renderFloats(); renderFilters(); renderBoard(rows);
+  renderTabs(); renderHeader(); renderFloats(); renderFilters();
+  document.getElementById("dash").hidden = galaxy;
+  document.getElementById("galaxySec").hidden = !galaxy;
+  if (galaxy) { renderGalaxy(); return; }
+  gxStop();
+  renderBoard(rows);
   groupTable("sportTable", inPeriod(byCapper()), "sport", "Sport", SPORT_NAMES);
   const multi = capper === TEAM && new Set(ALL.map(r => r.capper)).size > 1;
   document.getElementById("capperSec").hidden = !multi;
@@ -699,7 +966,7 @@ function setSource(live) {
 }
 
 capper = capperFromHash();
-ALL = fromSnapshot(); setupLog(); setupRange(); renderAll(); setSource(false);
+ALL = fromSnapshot(); setupLog(); setupRange(); setupGalaxy(); renderAll(); setSource(false);
 loadLive().then(rows => { ALL = rows; setupLog(); renderAll(); setSource(true); }).catch(() => {});
 </script>
 
