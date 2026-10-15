@@ -780,11 +780,11 @@ function playerStats(rows) {
   return list.filter(p => !p.merged).map(p => ({ ...p, roi: p.risk ? p.net / p.risk : 0 }));
 }
 const GX_TIERS = [
-  { k: "nova",  name: "Supernovas",  desc: "+3u or more",      test: v => v >= 3,            color: "#7dffb8", glow: "57,255,136" },
-  { k: "rise",  name: "Rising stars", desc: "+0.5u to +3u",    test: v => v >= 0.5 && v < 3, color: "#3ee08f", glow: "62,224,143" },
-  { k: "drift", name: "Drifters",    desc: "within ±0.5u",     test: v => v > -0.5 && v < 0.5, color: "#AFD7FA", glow: "175,215,250" },
-  { k: "fade",  name: "Fading",      desc: "−0.5u to −3u",     test: v => v <= -0.5 && v > -3, color: "#ff8a8a", glow: "255,110,110" },
-  { k: "hole",  name: "Black holes", desc: "−3u or worse",     test: v => v <= -3,           color: "#ff4d6a", glow: "255,77,106" },
+  { k: "nova",  name: "Supernovas",  desc: "+3u or more",      test: v => v >= 3,            color: "#d9ffe9", glow: "125,255,184" },
+  { k: "rise",  name: "Rising stars", desc: "+0.5u to +3u",    test: v => v >= 0.5 && v < 3, color: "#7fe8b0", glow: "62,224,143" },
+  { k: "drift", name: "Drifters",    desc: "within ±0.5u",     test: v => v > -0.5 && v < 0.5, color: "#bcd8ff", glow: "120,165,255" },
+  { k: "fade",  name: "Fading",      desc: "−0.5u to −3u",     test: v => v <= -0.5 && v > -3, color: "#ffa3b1", glow: "255,110,135" },
+  { k: "hole",  name: "Black holes", desc: "−3u or worse",     test: v => v <= -3,           color: "#ff5c76", glow: "255,77,106" },
 ];
 let gxCap = "All", gxStars = [], gxClusters = [], gxRaf = 0, gxT0 = 0, gxHover = null, gxQuery = "", gxBg = null, gxSize = null;
 const gxReduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -796,7 +796,7 @@ function renderGalaxy() {
   cbox.querySelectorAll(".chip").forEach(b => b.onclick = () => { gxCap = b.dataset.c; renderGalaxy(); });
   const players = playerStats(gxRows());
   document.getElementById("gxCount").textContent = `${players.length} players`;
-  // Within a cluster the biggest movers sit at the core; drifters are ordered by how often we bet them.
+  // Biggest movers come first so they sit at the heart of their patch; drifters are ordered by how often we bet them.
   gxClusters = GX_TIERS.map(t => {
     const ps = players.filter(p => t.test(p.net)).sort((a, b) => t.k === "drift" ? b.n - a.n : Math.abs(b.net) - Math.abs(a.net));
     return { ...t, players: ps, net: ps.reduce((s, p) => s + p.net, 0) };
@@ -811,101 +811,168 @@ function renderGalaxy() {
   lb("gxBottom", byNet.slice(-10).reverse().filter(p => p.net < 0));
   gxSize = null; gxLayout(); gxStart();
 }
+// One tilted spiral galaxy. Supernovas form the bright core, the Black holes orbit a dark hole between the arms,
+// and Rising stars, Drifters and Fading players sit in patches along the two arms. Positions live on a unit disk
+// (r 0–1) that turns slowly, inner stars faster, and is tilted onto the canvas.
+const GX_ARMS = 3, GX_WIND = 1.35;
+const gxArm = (arm, r) => arm * 2 * Math.PI / GX_ARMS + r * GX_WIND * Math.PI;
+let gxDust = [], gxDustLinks = [], gxLinks = [], gxLabels = [], gxHole = null, gxSprites = {};
+function gxSprite(glow, color) {
+  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const g = c.getContext("2d"), grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(0.12, color); grad.addColorStop(0.32, `rgba(${glow},.6)`); grad.addColorStop(0.6, `rgba(${glow},.16)`); grad.addColorStop(1, `rgba(${glow},0)`);
+  g.fillStyle = grad; g.fillRect(0, 0, 64, 64); return c;
+}
 function gxLayout() {
   const canvas = document.getElementById("gxCanvas"), stage = document.getElementById("gxStage");
   const W = stage.clientWidth; if (!W) return;
-  const vertical = W < 640;
-  const live = gxClusters.filter(c => c.players.length);
-  // Phyllotaxis spacing: a cluster of N stars has radius c·√N; pick c so every cluster fits the stage.
-  const extra = cl => cl.players.length + (cl.k === "hole" ? 10 : 0);   // black holes keep an empty core
-  const sq = live.map(cl => Math.sqrt(extra(cl)));
-  const gap = vertical ? 70 : 28;
-  let c = vertical ? (W * 0.86) / (2 * Math.max(...sq, 1)) : Math.min((W - gap * (live.length + 1)) / (2 * sq.reduce((a, b) => a + b, 0) || 1), 170 / Math.max(...sq, 1));
-  c = Math.max(4.2, Math.min(c, 11));
-  const MIN_R = vertical ? 46 : 52;
-  const spread = cl => Math.max(c, MIN_R / Math.sqrt(extra(cl)));   // small clusters spread out so they don't read as specks
-  const radius = cl => spread(cl) * Math.sqrt(extra(cl));
-  // Losing clusters on the left (bottom on phones), winners on the right (top).
-  const order = vertical ? [...live] : [...live].reverse();
-  const H = vertical ? Math.round(order.reduce((a, cl) => a + 2 * radius(cl) + gap, 20)) : Math.round(2 * Math.max(...order.map(radius)) + 120);
+  const phone = W < 640;
+  const Rx = W * (phone ? 0.47 : 0.45), Ry = Rx * (phone ? 0.8 : 0.5);
+  const H = Math.round(2 * Ry + (phone ? 70 : 90));
   const dpr = Math.min(devicePixelRatio || 1, 2);
   canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.height = H + "px";
-  gxSize = { W, H, dpr, vertical };
-  const slack = (W - order.reduce((a, cl) => a + 2 * radius(cl), 0)) / (order.length + 1);
-  let cursor = vertical ? 40 : slack;
-  gxStars = [];
-  order.forEach((cl, i) => {
-    cl.R = radius(cl);
-    if (vertical) { cl.cx = W / 2; cl.cy = cursor + cl.R; cursor += 2 * cl.R + gap; }
-    else { cl.cx = cursor + cl.R; cl.cy = H / 2 + 22 + (i % 2 ? -10 : 10); cursor += 2 * cl.R + slack; }
-    const skip = cl.k === "hole" ? 10 : 0;
-    const maxN = Math.max(...cl.players.map(p => p.n));
-    cl.players.forEach((p, j) => {
-      const idx = j + skip + 0.5, rho = spread(cl) * Math.sqrt(idx), th = idx * 2.39996323;
-      const mag = Math.min(1, Math.abs(p.net) / 6);
-      gxStars.push({ p, cl, rho, th, r: Math.min(1.1 + 1.5 * Math.sqrt(p.n), 9) * (vertical ? 0.9 : 1), a: 0.55 + 0.45 * (cl.k === "drift" ? p.n / maxN : mag), tw: Math.random() * 6.28, x: 0, y: 0 });
+  gxSize = { W, H, dpr, phone, cx: W / 2, cy: H / 2 + 6, Rx, Ry, scale: phone ? 0.62 : 0.85 };
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
+  const by = Object.fromEntries(gxClusters.map(c => [c.k, c]));
+  gxSprites = Object.fromEntries(gxClusters.map(c => [c.k, gxSprite(c.glow, c.color)]));
+  gxStars = []; gxLinks = []; gxLabels = [];
+  const add = (p, cl, r, th, extra) => gxStars.push({ p, cl, r0: r, th, r: Math.min(1.1 + 1.5 * Math.sqrt(p.n), 9) * gxSize.scale, tw: rnd() * 6.28, x: 0, y: 0, ...extra });
+  // Core: Supernovas, biggest winners dead centre.
+  const nova = by.nova.players;
+  nova.forEach((p, j) => add(p, by.nova, 0.115 * Math.sqrt((j + 0.5) / Math.max(nova.length, 1)), j * 2.39996323));
+  if (nova.length) gxLabels.push({ text: `${by.nova.name} · ${nova.length}`, color: by.nova.color, r: 0, th: 0, dy: -(0.13 * Ry + 16) });
+  // Arm patches: each arm is cut into slots that cycle Fading → Drifters → Rising, so neighbouring patches differ.
+  const SLOTS = 4, slots = [];
+  for (let arm = 0; arm < GX_ARMS; arm++) for (let k = 0; k < SLOTS; k++) {
+    const r0 = 0.17 + k * (0.83 / SLOTS), r1 = r0 + 0.83 / SLOTS;
+    slots.push({ arm, r0, r1, k: ["fade", "drift", "rise"][(k + arm) % 3] });
+  }
+  for (const key of ["rise", "drift", "fade"]) {
+    const cl = by[key], mine = slots.filter(s => s.k === key), ps = cl.players;
+    const wsum = mine.reduce((a, s) => a + s.r0 + s.r1, 0);
+    let j = 0;
+    mine.forEach((s, si) => {
+      const quota = si === mine.length - 1 ? ps.length - j : Math.round(ps.length * (s.r0 + s.r1) / wsum);
+      const start = gxStars.length;
+      for (let q = 0; q < quota && j < ps.length; q++, j++) {
+        const r = s.r0 + rnd() * (s.r1 - s.r0), spread = 0.35 + 0.75 * (q / Math.max(quota, 1));
+        add(ps[j], cl, Math.max(0.15, r + gauss() * 0.05), gxArm(s.arm, r) + gauss() * spread);
+      }
+      // Thin network lines: each star links to its two nearest neighbours in the same patch.
+      const group = gxStars.slice(start);
+      group.forEach((a, ia) => {
+        const ax = a.r0 * Math.cos(a.th), ay = a.r0 * Math.sin(a.th);
+        group.map((b, ib) => [ib, (b.r0 * Math.cos(b.th) - ax) ** 2 + (b.r0 * Math.sin(b.th) - ay) ** 2]).filter(d => d[0] !== ia)
+          .sort((x, y) => x[1] - y[1]).slice(0, 2).forEach(([ib]) => gxLinks.push([start + ia, start + ib]));
+      });
+      s.n = quota;
     });
-  });
-  gxClusters = gxClusters.map(cl => order.find(o => o.k === cl.k) || cl);
+    const big = mine.slice().sort((a, b) => (b.n || 0) - (a.n || 0))[0];
+    if (big && ps.length) gxLabels.push({ text: `${cl.name} · ${ps.length}`, color: cl.color, r: (big.r0 + big.r1) / 2, th: gxArm(big.arm, (big.r0 + big.r1) / 2) });
+  }
+  // Black hole: sits in the gap between the arms, its players circling the event horizon.
+  const hole = by.hole.players;
+  gxHole = hole.length ? { r: 0.62, th: gxArm(0, 0.62) + Math.PI / GX_ARMS, size: 0.045 + 0.004 * Math.sqrt(hole.length) } : null;
+  hole.forEach((p, j) => add(p, by.hole, 0, 0, { hole: true, dr: gxHole.size * (1.35 + 0.9 * Math.sqrt((j + 0.5) / hole.length)), dth: j * 2.39996323 }));
+  if (gxHole) gxLabels.push({ text: `${by.hole.name} · ${hole.length}`, color: by.hole.color, hole: true });
+  // Dust: unlabelled specks that trace the arms and fill the disk.
+  gxDust = [];
+  for (let i = 0; i < (phone ? 2600 : 5200); i++) {
+    const onArm = rnd() < 0.65, r = onArm ? 0.05 + 1.0 * Math.pow(rnd(), 0.85) : 0.03 + 1.05 * rnd();
+    gxDust.push({ r, th: onArm ? gxArm(i % GX_ARMS, r) + gauss() * 0.9 : rnd() * 6.283, a: 0.3 + rnd() * 0.6, s: rnd() < 0.8 ? 1.1 : 1.9 });
+  }
+  // Faint web between neighbouring dust specks, like the reference image.
+  gxDustLinks = [];
+  for (let i = 0; i < gxDust.length; i += 2) {
+    const a = gxDust[i], ax = a.r * Math.cos(a.th), ay = a.r * Math.sin(a.th);
+    let best = -1, bd = 0.004;
+    for (let j = i + 1; j < Math.min(gxDust.length, i + 400); j++) { const b = gxDust[j], d = (b.r * Math.cos(b.th) - ax) ** 2 + (b.r * Math.sin(b.th) - ay) ** 2; if (d < bd && d > 0.0004) { bd = d; best = j; } }
+    if (best >= 0) gxDustLinks.push([i, best]);
+  }
   gxBg = gxBackdrop(W, H, dpr);
 }
 function gxBackdrop(W, H, dpr) {
   const off = document.createElement("canvas"); off.width = W * dpr; off.height = H * dpr;
   const g = off.getContext("2d"); g.scale(dpr, dpr);
+  const { cx, cy, Rx, Ry } = gxSize;
   let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < W * H / 900; i++) { g.fillStyle = `rgba(200,220,255,${0.08 + rnd() * 0.3})`; g.fillRect(rnd() * W, rnd() * H, rnd() < 0.9 ? 1 : 1.6, rnd() < 0.9 ? 1 : 1.6); }
-  for (const cl of gxClusters) {
-    if (!cl.players.length) continue;
-    const neb = g.createRadialGradient(cl.cx, cl.cy, 0, cl.cx, cl.cy, cl.R * 1.6);
-    neb.addColorStop(0, `rgba(${cl.glow},${cl.k === "hole" ? 0.05 : 0.2})`); neb.addColorStop(0.5, `rgba(${cl.glow},0.07)`); neb.addColorStop(1, `rgba(${cl.glow},0)`);
-    g.fillStyle = neb; g.beginPath(); g.ellipse(cl.cx, cl.cy, cl.R * 1.6, cl.R * 1.6, 0, 0, 6.29); g.fill();
-    if (cl.k === "hole") {
-      const core = cl.R * 0.3 + 6;
-      const ring = g.createRadialGradient(cl.cx, cl.cy, core * 0.7, cl.cx, cl.cy, core * 1.9);
-      ring.addColorStop(0, "rgba(0,0,0,1)"); ring.addColorStop(0.42, "rgba(0,0,0,1)"); ring.addColorStop(0.5, "rgba(255,140,90,.75)"); ring.addColorStop(0.62, "rgba(255,77,106,.35)"); ring.addColorStop(1, "rgba(255,77,106,0)");
-      g.fillStyle = ring; g.beginPath(); g.arc(cl.cx, cl.cy, core * 1.9, 0, 6.29); g.fill();
-    }
-    const top = gxSize.vertical ? cl.cy - cl.R - 18 : Math.min(cl.cy - cl.R - 18, H - 30);
-    g.textAlign = "center"; g.font = "800 12px Archivo, system-ui, sans-serif"; g.fillStyle = cl.color;
-    g.fillText(cl.name.toUpperCase(), cl.cx, Math.max(16, top));
-    g.font = "500 11px Archivo, system-ui, sans-serif"; g.fillStyle = "rgba(200,215,240,.75)";
-    g.fillText(`${cl.players.length} · ${fmtU(cl.net)}`, cl.cx, Math.max(30, top + 15));
-  }
+  for (let i = 0; i < W * H / 700; i++) { g.fillStyle = `rgba(190,210,255,${0.06 + rnd() * 0.25})`; g.fillRect(rnd() * W, rnd() * H, 1, 1); }
+  // Disk haze and the bright core.
+  g.save(); g.translate(cx, cy); g.scale(1, Ry / Rx);
+  const disk = g.createRadialGradient(0, 0, 0, 0, 0, Rx * 1.05);
+  disk.addColorStop(0, "rgba(130,170,255,.4)"); disk.addColorStop(0.35, "rgba(80,120,230,.2)"); disk.addColorStop(0.7, "rgba(60,95,200,.08)"); disk.addColorStop(1, "rgba(40,70,160,0)");
+  g.fillStyle = disk; g.beginPath(); g.arc(0, 0, Rx * 1.05, 0, 6.29); g.fill();
+  const core = g.createRadialGradient(0, 0, 0, 0, 0, Rx * 0.26);
+  core.addColorStop(0, "rgba(255,255,255,.75)"); core.addColorStop(0.16, "rgba(210,255,230,.42)"); core.addColorStop(0.5, "rgba(100,210,160,.25)"); core.addColorStop(1, "rgba(60,120,200,0)");
+  g.fillStyle = core; g.beginPath(); g.arc(0, 0, Rx * 0.26, 0, 6.29); g.fill();
+  g.restore();
   return off;
 }
 function gxDraw(t) {
   const canvas = document.getElementById("gxCanvas"); if (!gxSize) return;
-  const { W, H, dpr } = gxSize, g = canvas.getContext("2d");
+  const { W, H, dpr, cx, cy, Rx, Ry } = gxSize, g = canvas.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
   if (gxBg) g.drawImage(gxBg, 0, 0, W, H);
-  const q = gxQuery;
-  // Inner stars orbit faster than outer ones, like a real galaxy.
+  const spin = r => t * 0.000032 / (0.22 + r);   // inner stars orbit faster
+  const proj = (r, th) => [cx + r * Math.cos(th) * Rx, cy + r * Math.sin(th) * Ry];
+  g.fillStyle = "#c8dcff";
+  for (const d of gxDust) { [d.x, d.y] = proj(d.r, d.th + spin(d.r)); g.globalAlpha = d.a; g.fillRect(d.x, d.y, d.s, d.s); }
+  g.globalAlpha = 0.34; g.strokeStyle = "#a9c8ff"; g.lineWidth = 0.6; g.beginPath();
+  for (const [a, b] of gxDustLinks) { g.moveTo(gxDust[a].x, gxDust[a].y); g.lineTo(gxDust[b].x, gxDust[b].y); }
+  g.stroke();
+  let hx = 0, hy = 0;
+  if (gxHole) [hx, hy] = proj(gxHole.r, gxHole.th + spin(gxHole.r));
+  const q = gxQuery, reduced = gxReduced();
   for (const s of gxStars) {
-    const ang = s.th + t * 0.00006 / (0.35 + s.rho / s.cl.R);
-    s.x = s.cl.cx + Math.cos(ang) * s.rho; s.y = s.cl.cy + Math.sin(ang) * s.rho * 0.92;
-    const match = !q || s.p.name.toLowerCase().includes(q);
-    const tw = gxReduced() ? 1 : 0.8 + 0.2 * Math.sin(t * 0.002 + s.tw);
-    g.globalAlpha = (match ? s.a : 0.12) * tw;
-    const rr = s.r * (s === gxHover || (q && match) ? 1.6 : 1);
-    const halo = g.createRadialGradient(s.x, s.y, 0, s.x, s.y, rr * 3);
-    halo.addColorStop(0, `rgba(${s.cl.glow},.55)`); halo.addColorStop(1, `rgba(${s.cl.glow},0)`);
-    g.fillStyle = halo; g.beginPath(); g.arc(s.x, s.y, rr * 3, 0, 6.29); g.fill();
-    g.fillStyle = s.cl.color; g.beginPath(); g.arc(s.x, s.y, rr, 0, 6.29); g.fill();
-    g.fillStyle = "#fff"; g.globalAlpha *= 0.85; g.beginPath(); g.arc(s.x, s.y, rr * 0.38, 0, 6.29); g.fill();
+    if (s.hole) { const a = s.dth + t * 0.00025; s.x = hx + Math.cos(a) * s.dr * Rx; s.y = hy + Math.sin(a) * s.dr * Ry; }
+    else [s.x, s.y] = proj(s.r0, s.th + spin(s.r0));
   }
-  g.globalAlpha = 1;
-  // Name the three brightest Supernovas and the three deepest Black holes.
-  g.font = "600 11px Archivo, system-ui, sans-serif"; g.textAlign = "left";
-  for (const cl of gxClusters) {
-    if ((cl.k !== "nova" && cl.k !== "hole") || q) continue;
-    const placed = [];
-    gxStars.filter(s => s.cl === cl).slice(0, 3).forEach(s => {
-      const label = s.p.name, w = g.measureText(label).width + 8;
-      let x = s.x + s.r + 4; if (x + w > W - 4) x = s.x - s.r - 4 - w;
+  // Network lines between neighbours.
+  g.globalAlpha = q ? 0.05 : 0.22; g.lineWidth = 0.6;
+  for (const [a, b] of gxLinks) { const A = gxStars[a], B = gxStars[b]; g.strokeStyle = A.cl.color; g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); }
+  // Event horizon with its accretion ring, drawn under the stars that orbit it.
+  if (gxHole) {
+    const hr = gxHole.size * Rx;
+    g.globalAlpha = 1; g.save(); g.translate(hx, hy); g.scale(1, Ry / Rx);
+    const ring = g.createRadialGradient(0, 0, hr * 0.6, 0, 0, hr * 2.2);
+    ring.addColorStop(0, "rgba(0,0,0,1)"); ring.addColorStop(0.42, "rgba(0,0,0,1)"); ring.addColorStop(0.5, "rgba(255,150,100,.85)"); ring.addColorStop(0.62, "rgba(255,77,106,.4)"); ring.addColorStop(1, "rgba(255,77,106,0)");
+    g.fillStyle = ring; g.beginPath(); g.arc(0, 0, hr * 2.2, 0, 6.29); g.fill(); g.restore();
+  }
+  g.globalCompositeOperation = "lighter";   // overlapping glows add up, like real starlight
+  for (const s of gxStars) {
+    const match = !q || s.p.name.toLowerCase().includes(q);
+    g.globalAlpha = (match ? (s.cl.k === "nova" ? 0.7 : 1) : 0.1) * (reduced ? 1 : 0.78 + 0.22 * Math.sin(t * 0.002 + s.tw));
+    const rr = s.r * (s === gxHover || (q && match) ? 1.7 : 1) * 3.4;
+    g.drawImage(gxSprites[s.cl.k], s.x - rr, s.y - rr, rr * 2, rr * 2);
+  }
+  g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+  if (gxHover) { g.strokeStyle = "#fff"; g.lineWidth = 1.2; g.beginPath(); g.arc(gxHover.x, gxHover.y, gxHover.r * 2 + 3, 0, 6.29); g.stroke(); }
+  // Cluster labels ride along with their patch.
+  g.textAlign = "center"; g.font = "800 11px Archivo, system-ui, sans-serif";
+  const boxes = [];
+  const pill = (text, x, y, color, font) => {
+    g.font = font; const w = g.measureText(text).width + 12;
+    x = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x)); y = Math.max(12, Math.min(H - 8, y));
+    const box = [x - w / 2, y - 11, w, 16];
+    if (boxes.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + 16 && box[1] < b[1] + 16)) return;
+    boxes.push(box); g.fillStyle = "rgba(6,10,28,.72)"; g.fillRect(...box); g.fillStyle = color; g.fillText(text, x, y + 1);
+  };
+  if (!q) {
+    for (const L of gxLabels) {
+      let x, y;
+      if (L.hole) { x = hx; y = hy - gxHole.size * Ry * 2.6 - 12; }
+      else { [x, y] = proj(L.r, L.th + spin(L.r)); y += L.dy || -18; }
+      pill(L.text.toUpperCase(), x, y, L.color, "800 11px Archivo, system-ui, sans-serif");
+    }
+    // Name the top Supernovas and Black holes.
+    g.textAlign = "left";
+    for (const k of ["nova", "hole"]) gxStars.filter(s => s.cl.k === k).slice(0, 3).forEach(s => {
+      g.font = "600 11px Archivo, system-ui, sans-serif"; const w = g.measureText(s.p.name).width + 8;
+      let x = s.x + s.r + 5; if (x + w > W - 4) x = s.x - s.r - 5 - w;
       const box = [x, s.y - 8, w, 15];
-      if (placed.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + 15 && box[1] < b[1] + 15)) return;
-      placed.push(box);
-      g.fillStyle = "rgba(10,14,32,.7)"; g.fillRect(...box); g.fillStyle = cl.color; g.fillText(label, x + 4, s.y + 3);
+      if (boxes.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + 15 && box[1] < b[1] + 15)) return;
+      boxes.push(box); g.fillStyle = "rgba(6,10,28,.72)"; g.fillRect(...box); g.fillStyle = s.cl.color; g.fillText(s.p.name, x + 4, s.y + 3);
     });
   }
   if (gxHover) gxShowTip(gxHover);
