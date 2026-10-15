@@ -820,7 +820,7 @@ let gxDust = [], gxDustLinks = [], gxLinks = [], gxLabels = [], gxHole = null, g
 function gxSprite(glow, color) {
   const c = document.createElement("canvas"); c.width = c.height = 64;
   const g = c.getContext("2d"), grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-  grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(0.12, color); grad.addColorStop(0.3, `rgba(${glow},.45)`); grad.addColorStop(1, `rgba(${glow},0)`);
+  grad.addColorStop(0, "rgba(255,255,255,1)"); grad.addColorStop(0.12, color); grad.addColorStop(0.32, `rgba(${glow},.6)`); grad.addColorStop(0.6, `rgba(${glow},.16)`); grad.addColorStop(1, `rgba(${glow},0)`);
   g.fillStyle = grad; g.fillRect(0, 0, 64, 64); return c;
 }
 function gxLayout() {
@@ -842,11 +842,11 @@ function gxLayout() {
   const nova = by.nova.players;
   nova.forEach((p, j) => add(p, by.nova, 0.115 * Math.sqrt((j + 0.5) / Math.max(nova.length, 1)), j * 2.39996323));
   if (nova.length) gxLabels.push({ text: `${by.nova.name} · ${nova.length}`, color: by.nova.color, r: 0, th: 0, dy: -(0.13 * Ry + 16) });
-  // Arm patches: each arm is cut into slots that cycle Rising → Drifters → Fading, so neighbouring patches differ.
+  // Arm patches: each arm is cut into slots that cycle Fading → Drifters → Rising, so neighbouring patches differ.
   const SLOTS = 4, slots = [];
   for (let arm = 0; arm < GX_ARMS; arm++) for (let k = 0; k < SLOTS; k++) {
     const r0 = 0.17 + k * (0.83 / SLOTS), r1 = r0 + 0.83 / SLOTS;
-    slots.push({ arm, r0, r1, k: ["rise", "drift", "fade"][(k + arm) % 3] });
+    slots.push({ arm, r0, r1, k: ["fade", "drift", "rise"][(k + arm) % 3] });
   }
   for (const key of ["rise", "drift", "fade"]) {
     const cl = by[key], mine = slots.filter(s => s.k === key), ps = cl.players;
@@ -884,7 +884,7 @@ function gxLayout() {
   }
   // Faint web between neighbouring dust specks, like the reference image.
   gxDustLinks = [];
-  for (let i = 0; i < gxDust.length; i += 3) {
+  for (let i = 0; i < gxDust.length; i += 2) {
     const a = gxDust[i], ax = a.r * Math.cos(a.th), ay = a.r * Math.sin(a.th);
     let best = -1, bd = 0.004;
     for (let j = i + 1; j < Math.min(gxDust.length, i + 400); j++) { const b = gxDust[j], d = (b.r * Math.cos(b.th) - ax) ** 2 + (b.r * Math.sin(b.th) - ay) ** 2; if (d < bd && d > 0.0004) { bd = d; best = j; } }
@@ -901,11 +901,11 @@ function gxBackdrop(W, H, dpr) {
   // Disk haze and the bright core.
   g.save(); g.translate(cx, cy); g.scale(1, Ry / Rx);
   const disk = g.createRadialGradient(0, 0, 0, 0, 0, Rx * 1.05);
-  disk.addColorStop(0, "rgba(120,160,255,.28)"); disk.addColorStop(0.35, "rgba(70,110,220,.12)"); disk.addColorStop(1, "rgba(40,70,160,0)");
+  disk.addColorStop(0, "rgba(130,170,255,.4)"); disk.addColorStop(0.35, "rgba(80,120,230,.2)"); disk.addColorStop(0.7, "rgba(60,95,200,.08)"); disk.addColorStop(1, "rgba(40,70,160,0)");
   g.fillStyle = disk; g.beginPath(); g.arc(0, 0, Rx * 1.05, 0, 6.29); g.fill();
-  const core = g.createRadialGradient(0, 0, 0, 0, 0, Rx * 0.2);
-  core.addColorStop(0, "rgba(255,255,255,.95)"); core.addColorStop(0.18, "rgba(200,255,225,.55)"); core.addColorStop(0.55, "rgba(90,200,150,.18)"); core.addColorStop(1, "rgba(60,120,200,0)");
-  g.fillStyle = core; g.beginPath(); g.arc(0, 0, Rx * 0.2, 0, 6.29); g.fill();
+  const core = g.createRadialGradient(0, 0, 0, 0, 0, Rx * 0.26);
+  core.addColorStop(0, "rgba(255,255,255,.75)"); core.addColorStop(0.16, "rgba(210,255,230,.42)"); core.addColorStop(0.5, "rgba(100,210,160,.25)"); core.addColorStop(1, "rgba(60,120,200,0)");
+  g.fillStyle = core; g.beginPath(); g.arc(0, 0, Rx * 0.26, 0, 6.29); g.fill();
   g.restore();
   return off;
 }
@@ -918,7 +918,7 @@ function gxDraw(t) {
   const proj = (r, th) => [cx + r * Math.cos(th) * Rx, cy + r * Math.sin(th) * Ry];
   g.fillStyle = "#c8dcff";
   for (const d of gxDust) { [d.x, d.y] = proj(d.r, d.th + spin(d.r)); g.globalAlpha = d.a; g.fillRect(d.x, d.y, d.s, d.s); }
-  g.globalAlpha = 0.18; g.strokeStyle = "#9fc0ff"; g.lineWidth = 0.5; g.beginPath();
+  g.globalAlpha = 0.34; g.strokeStyle = "#a9c8ff"; g.lineWidth = 0.6; g.beginPath();
   for (const [a, b] of gxDustLinks) { g.moveTo(gxDust[a].x, gxDust[a].y); g.lineTo(gxDust[b].x, gxDust[b].y); }
   g.stroke();
   let hx = 0, hy = 0;
@@ -939,13 +939,14 @@ function gxDraw(t) {
     ring.addColorStop(0, "rgba(0,0,0,1)"); ring.addColorStop(0.42, "rgba(0,0,0,1)"); ring.addColorStop(0.5, "rgba(255,150,100,.85)"); ring.addColorStop(0.62, "rgba(255,77,106,.4)"); ring.addColorStop(1, "rgba(255,77,106,0)");
     g.fillStyle = ring; g.beginPath(); g.arc(0, 0, hr * 2.2, 0, 6.29); g.fill(); g.restore();
   }
+  g.globalCompositeOperation = "lighter";   // overlapping glows add up, like real starlight
   for (const s of gxStars) {
     const match = !q || s.p.name.toLowerCase().includes(q);
-    g.globalAlpha = (match ? 1 : 0.1) * (reduced ? 1 : 0.78 + 0.22 * Math.sin(t * 0.002 + s.tw));
-    const rr = s.r * (s === gxHover || (q && match) ? 1.7 : 1) * 3;
+    g.globalAlpha = (match ? (s.cl.k === "nova" ? 0.7 : 1) : 0.1) * (reduced ? 1 : 0.78 + 0.22 * Math.sin(t * 0.002 + s.tw));
+    const rr = s.r * (s === gxHover || (q && match) ? 1.7 : 1) * 3.4;
     g.drawImage(gxSprites[s.cl.k], s.x - rr, s.y - rr, rr * 2, rr * 2);
   }
-  g.globalAlpha = 1;
+  g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
   if (gxHover) { g.strokeStyle = "#fff"; g.lineWidth = 1.2; g.beginPath(); g.arc(gxHover.x, gxHover.y, gxHover.r * 2 + 3, 0, 6.29); g.stroke(); }
   // Cluster labels ride along with their patch.
   g.textAlign = "center"; g.font = "800 11px Archivo, system-ui, sans-serif";
