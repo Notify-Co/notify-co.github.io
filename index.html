@@ -716,13 +716,14 @@ function orbitIn() {
 /* ---------- Galaxy: every player we've bet on, as a star ---------- */
 // Player names come from the free-text Play column. Team bets (spreads, MLs, totals, futures) are left out.
 const LEG_SPLIT = /\s*(?:\/|\s\+\s|\sw\/\s|\sH2H\s|\s&\s|,)\s*/i;
-const BOOK_TAGS = /^(PB|DK|PP|FD|UD|MGM|CZR|ESPN|Lotto|Entries|Combo|Rebet|Adj\.?|Books?|Boost(ed)?|SGP)$/i;
-const STAT_WORD = /^(entries|combo|rebet|pts?|reb|rebs|ast|asts|pra|pr|pa|ra|3pm|3s|threes|td|dd|tackles?|shots?|sot|passes|pass|slips|parlay|goals?|anytime|assists?|saves|fouls|cards?|rush|rec|receptions|yards|lotto|champ|blk|stl|stocks|fs|h2h)$/i;
+const BOOK_TAGS = /^(PB|DK|PP|FD|UD|MGM|CZR|ESPN|Lottos?|Entries|Combo|Rebet|Adj\.?|Books?|Boost(ed)?|SGP)$/i;
+const STAT_WORD = /^(entries|combo|rebet|pts?|reb|rebs|ast|asts|pra|pr|pa|ra|3pm|3s|threes|td|dd|tackles?|shots?|sot|passes|pass|slips|parlay|goals?|anytime|assists?|saves|fouls|cards?|rush|rec|receptions|yards|lottos?|champ|blk|stl|stocks|fs|h2h)$/i;
 const LINE_TOKEN = /^([ouOU]\d|[OU]$|\d|[+-]\d)/;
 const TEAM_CODES = new Set("ATL BOS BKN CHA CHI CLE DAL DEN DET GSW HOU IND LAC LAL MEM MIA MIL MIN NOP NYK OKC ORL PHI PHX POR SAC SAS TOR UTA WAS WSH NYL LVA LV CON SEA PHO LAS GSV USA".split(" "));
 // Nicknames used in the sheet, so they join the player's other picks.
 const NICKNAMES = { AD: "Anthony Davis", AT: "Alyssa Thomas", KD: "Kevin Durant", PJ: "PJ Washington", CJ: "CJ McCollum", VJ: "VJ Edgecombe",
-  OG: "OG Anunoby", JJ: "Jonquel Jones", CC: "Caitlin Clark", MAMU: "Mamukelashvili" };
+  OG: "OG Anunoby", JJ: "Jonquel Jones", CC: "Caitlin Clark", MAMU: "Mamukelashvili", PAIGE: "Paige Bueckers", BUECKERS: "Paige Bueckers",
+  CHELSEA: "Chelsea Gray", JONQUEL: "Jonquel Jones", "KMITCH ERROR": "Kmitch", MO: "Monique Akoa-Makani", "AKOA MAKANI": "Monique Akoa-Makani" };
 // Multi-player DFS entries (Flex, F5, 4 Man, Power 3) don't name who's in them, so they stay off the map.
 const SKIP_ENTRY = /\b(Flex|F5|4 Man|P3|Power 3)\b/i;
 function playerOf(leg, teamPlay) {
@@ -737,8 +738,7 @@ function playerOf(leg, teamPlay) {
   if (/\b(ML|DBL|Total|Flex)\b|\bto (QF|SF|win|make|advance)\b|^\[/i.test(leg)) return null;
   if (name.length === 1 && TEAM_CODES.has(name[0])) return null;      // team codes like SAS, WSH
   if (/^(Over|Under|Parlay|Team|Game|Draw|Both)$/i.test(name[0])) return null;
-  const full = name.join(" ").replace(/\s+(Jr|Sr)\.?$/i, " Jr.");
-  return NICKNAMES[full.toUpperCase()] || full;
+  return name.join(" ").replace(/\s+(Jr|Sr)\.?$/i, " Jr.");
 }
 function playersIn(play) {
   if (SKIP_ENTRY.test(play)) return { legs: 1, players: [] };
@@ -752,7 +752,8 @@ function playerStats(rows) {
   const map = new Map();
   for (const r of rows) {
     const { legs, players } = playersIn(r.play);
-    for (const name of new Set(players)) {
+    // Nicknames are basketball/football ones; in soccer "Chelsea" is the club, not Chelsea Gray.
+    for (const name of new Set(players.map(n => r.sport === "SOC" ? n : NICKNAMES[n.toUpperCase()] || n))) {
       const k = pKey(r.sport, name);
       let p = map.get(k);
       if (!p) map.set(k, p = { name, sport: r.sport, cappers: new Set(), n: 0, w: 0, l: 0, risk: 0, net: 0 });
