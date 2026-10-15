@@ -102,6 +102,8 @@ header::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 70
   border: 1px solid oklch(70% 0.14 290 / .12); rotate: 5deg; pointer-events: none; }
 #blurb { margin: 0; max-width: 58ch; font-size: 1.08rem; color: var(--ink-2); }
 #blurb a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; } #blurb a:hover { color: var(--ink); }
+#blurb .nw { white-space: nowrap; }
+#blurb .plat { width: 1.2em; height: 1.2em; margin-left: .4em; vertical-align: -0.22em; object-fit: contain; }
 .stamp { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 16px; border-radius: 999px;
   font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); background: oklch(100% 0 0 / .04); border: 1px solid var(--line-2); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
@@ -437,10 +439,10 @@ function renderTabs() {
 }
 // Capper bios shown under the big name on each personal tab, with a link to their own subscription.
 const BIOS = {
-  caleb: { text: "Head of NotifyPicks, with betting content centered around basketball, the niche being women's. Writer of NFL Primetime Expectations.", link: "Patreon for as low as $15/mo", url: "https://www.patreon.com/calebbets" },
-  sammy: { text: "Basketball Specialist, with betting content centered around the NBA.", link: "Winible for as low as $20/mo", url: "https://winible.com/sammygprops" },
-  quentin: { text: "American Football Specialist, with betting content centered around NFL &amp; CFB.", link: "DubClub for as low as $20/mo", url: "https://dubclub.win/QuentinLocks/" },
-  footy: { text: "Soccer Specialist, with multi-league, year round betting content.", link: "Whop for as low as $25/mo", url: "https://whop.com/docta-picks/" },
+  caleb: { logo: "logos/patreon.png", text: "Head of NotifyPicks, with betting content centered around basketball, the niche being women's. Writer of NFL Primetime Expectations.", link: "Patreon for as low as $15/mo", url: "https://www.patreon.com/calebbets" },
+  sammy: { logo: "logos/winible.png", text: "Basketball Specialist, with betting content centered around the NBA.", link: "Winible for as low as $20/mo", url: "https://winible.com/sammygprops" },
+  quentin: { logo: "logos/dubclub.png", text: "American Football Specialist, with betting content centered around NFL &amp; CFB.", link: "DubClub for as low as $20/mo", url: "https://dubclub.win/QuentinLocks/" },
+  footy: { logo: "logos/whop.png", text: "Soccer Specialist, with multi-league, year round betting content.", link: "Whop for as low as $25/mo", url: "https://whop.com/docta-picks/" },
 };
 function renderHeader() {
   const team = capper === TEAM;
@@ -450,7 +452,7 @@ function renderHeader() {
   const bio = BIOS[slug(capper)];
   document.getElementById("blurb").innerHTML = team
     ? "Every pick the team has sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play."
-    : bio ? `${bio.text} Found individually on <a href="${bio.url}" target="_blank" rel="noopener">${bio.link}</a>.`
+    : bio ? `${bio.text} Found individually on <a href="${bio.url}" target="_blank" rel="noopener">${bio.link}</a><span class="nw">.<a class="plat-link" href="${bio.url}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="plat" src="${bio.logo}" alt="" width="20" height="20"></a></span>`
     : `Every pick ${esc(capper)} has sent, graded. Units are a standard stake size, so results compare fairly no matter how much you bet per play.`;
   document.title = team ? "Notify Pick Tracker" : `${capper} · Notify Pick Tracker`;
 }
