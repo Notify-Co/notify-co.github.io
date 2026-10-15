@@ -102,7 +102,8 @@ header::after { content: ""; position: absolute; z-index: -1; left: 50%; top: 70
   border: 1px solid oklch(70% 0.14 290 / .12); rotate: 5deg; pointer-events: none; }
 #blurb { margin: 0; max-width: 58ch; font-size: 1.08rem; color: var(--ink-2); }
 #blurb a { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; } #blurb a:hover { color: var(--ink); }
-#blurb a .plat { width: 1.2em; height: 1.2em; margin-right: .35em; vertical-align: -0.22em; object-fit: contain; }
+#blurb .nw { white-space: nowrap; }
+#blurb .plat { width: 1.2em; height: 1.2em; margin-left: .4em; vertical-align: -0.22em; object-fit: contain; }
 .stamp { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 16px; border-radius: 999px;
   font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); background: oklch(100% 0 0 / .04); border: 1px solid var(--line-2); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-3); }
@@ -451,7 +452,7 @@ function renderHeader() {
   const bio = BIOS[slug(capper)];
   document.getElementById("blurb").innerHTML = team
     ? "Every pick the team has sent, graded. Units are our standard stake size, so results compare fairly no matter how much you bet per play."
-    : bio ? `${bio.text} Found individually on <a href="${bio.url}" target="_blank" rel="noopener"><img class="plat" src="${bio.logo}" alt="" width="20" height="20">${bio.link}</a>.`
+    : bio ? `${bio.text} Found individually on <a href="${bio.url}" target="_blank" rel="noopener">${bio.link}</a><span class="nw">.<a class="plat-link" href="${bio.url}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img class="plat" src="${bio.logo}" alt="" width="20" height="20"></a></span>`
     : `Every pick ${esc(capper)} has sent, graded. Units are a standard stake size, so results compare fairly no matter how much you bet per play.`;
   document.title = team ? "Notify Pick Tracker" : `${capper} · Notify Pick Tracker`;
 }
