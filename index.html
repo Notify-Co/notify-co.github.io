@@ -879,12 +879,12 @@ function gxLayout() {
           const r = s.r0 + rnd() * (s.r1 - s.r0), spread = 0.35 + 0.75 * (q / Math.max(quota, 1));
           add(gi, ps[j], cl, Math.max(rIn, r + gauss() * 0.05), gxArm(s.arm, r) + gauss() * spread);
         }
-        // Thin network lines: each star links to its two nearest neighbours in the same patch.
+        // A few thin network lines: every third star links to its nearest neighbour in the same patch.
         const group = gxStars.slice(start);
         group.forEach((a, ia) => {
           const ax = a.r0 * Math.cos(a.th), ay = a.r0 * Math.sin(a.th);
           group.map((b, ib) => [ib, (b.r0 * Math.cos(b.th) - ax) ** 2 + (b.r0 * Math.sin(b.th) - ay) ** 2]).filter(d => d[0] !== ia)
-            .sort((x, y) => x[1] - y[1]).slice(0, 2).forEach(([ib]) => gxLinks.push([start + ia, start + ib]));
+            .sort((x, y) => x[1] - y[1]).slice(0, ia % 3 ? 0 : 1).forEach(([ib]) => gxLinks.push([start + ia, start + ib]));
         });
         s.n = quota;
       });
@@ -898,11 +898,11 @@ function gxLayout() {
   if (nova.length) gxLabels.push({ gi: 0, text: `${by.nova.name} · ${nova.length}`, color: by.nova.color, r: 0, th: 0, dy: -(0.16 * gxGals[0].Ry + 18) });
   arms(0, ["drift", "rise"], 0.2);
   // Losers' galaxy: a black hole at the centre with the Black holes on its accretion disk, Fading players on the arms.
-  gxHole = { gi: 1, size: phone ? 0.1 : 0.095 };
+  gxHole = { gi: 1, size: 0.15 };
   const hole = by.hole.players;
-  hole.forEach((p, j) => add(1, p, by.hole, 0, 0, { hole: true, dr: gxHole.size * (1.45 + 1.4 * Math.sqrt((j + 0.5) / hole.length)), dth: j * 2.39996323 }));
+  hole.forEach((p, j) => add(1, p, by.hole, 0, 0, { hole: true, dr: gxHole.size * (1.5 + 1.3 * Math.sqrt((j + 0.5) / hole.length)), dth: j * 2.39996323 }));
   if (hole.length) gxLabels.push({ gi: 1, text: `${by.hole.name} · ${hole.length}`, color: by.hole.color, hole: true });
-  arms(1, ["fade"], 0.38);
+  arms(1, ["fade"], 0.46);
   // Dust: unlabelled specks that trace the arms and fill each disk, plus warm swirl streaks like an accretion disk.
   gxDust = []; gxArcs = [];
   gxGals.forEach((G, gi) => {
@@ -911,14 +911,14 @@ function gxLayout() {
       const onArm = rnd() < 0.6, r = rIn + (1.05 - rIn) * (onArm ? Math.pow(rnd(), 0.85) : rnd());
       gxDust.push({ gi, r, th: onArm ? gxArm(i % GX_ARMS, r) + gauss() * 0.9 : rnd() * 6.283, a: 0.3 + rnd() * 0.6, s: rnd() < 0.8 ? 1.1 : 1.9 });
     }
-    for (let i = 0; i < (phone ? 110 : 200); i++) {
+    for (let i = 0; i < (phone ? 35 : 60); i++) {
       const r = rIn + 0.04 + (1 - rIn) * Math.pow(rnd(), 1.25);
       gxArcs.push({ gi, r, phi: rnd() * 6.283, len: 0.3 + rnd() * 0.9, wide: rnd() < 0.35, c: r < 0.4 ? 0 : r < 0.7 ? 1 : 2 });
     }
   });
   // Faint web between neighbouring dust specks in the same galaxy.
   gxDustLinks = [];
-  for (let i = 0; i < gxDust.length; i += 2) {
+  for (let i = 0; i < gxDust.length; i += 7) {
     const a = gxDust[i], ax = a.r * Math.cos(a.th), ay = a.r * Math.sin(a.th);
     let best = -1, bd = 0.004;
     for (let j = i + 1; j < Math.min(gxDust.length, i + 400); j++) {
@@ -946,7 +946,7 @@ function gxCloud(gi, S, seed0) {
   const g = off.getContext("2d"), k = S / 2.3, c = S / 2;   // unit → px
   let sd = seed0; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
   const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
-  const hole = gi === 1, rIn = hole ? 0.13 : 0;
+  const hole = gi === 1, rIn = hole ? 0.16 : 0;
   const tint = r => Math.max(0, Math.min(4, Math.floor((r - rIn) / (1.05 - rIn) * 4.6 + gauss() * 0.6)));
   const puff = (ci, r, th, size, a) => { g.globalAlpha = a; const x = c + r * Math.cos(th) * k, y = c + r * Math.sin(th) * k, s = size * k; g.drawImage(gxPuffs[ci], x - s, y - s, 2 * s, 2 * s); };
   const where = onArm => { const r = rIn + (1.08 - rIn) * Math.pow(rnd(), onArm ? 0.9 : 0.75); return [r, onArm ? gxArm(Math.floor(rnd() * GX_ARMS), r) + gauss() * 0.55 : rnd() * 6.283]; };
@@ -958,7 +958,7 @@ function gxCloud(gi, S, seed0) {
   g.globalCompositeOperation = "lighter";
   for (let i = 0; i < 2600; i++) { const [r, th] = where(rnd() < 0.75); puff(Math.max(0, tint(r) - 1), r, th, 0.008 + rnd() * 0.028, 0.06 + rnd() * 0.18); }
   // Hot inner ring: a white-hot rim around the hole, or the blazing core of the winners' galaxy.
-  for (let i = 0; i < 500; i++) { const r = hole ? 0.13 + Math.abs(gauss()) * 0.14 : Math.abs(gauss()) * 0.2, th = rnd() * 6.283; puff(r < 0.16 ? 0 : 1, r, th, 0.02 + rnd() * 0.05, 0.05 + rnd() * 0.12); }
+  for (let i = 0; i < 500; i++) { const r = hole ? 0.16 + Math.abs(gauss()) * 0.16 : Math.abs(gauss()) * 0.2, th = rnd() * 6.283; puff(r < 0.16 ? 0 : 1, r, th, 0.02 + rnd() * 0.05, 0.05 + rnd() * 0.12); }
   g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
   return off;
 }
@@ -1021,7 +1021,7 @@ function gxDraw(t) {
   // Swirl streaks: arcs of each disk, white-gold near the centre, orange, then magenta at the rim.
   g.globalCompositeOperation = "lighter";
   // Batched into a few paths by colour and width so the streaks stay cheap to draw.
-  const ARC_COL = ["rgba(255,236,190,.32)", "rgba(255,170,80,.28)", "rgba(230,80,170,.26)"];
+  const ARC_COL = ["rgba(255,236,190,.2)", "rgba(255,170,80,.18)", "rgba(230,80,170,.16)"];
   for (let c = 0; c < 3; c++) for (const wide of [false, true]) {
     g.strokeStyle = ARC_COL[c]; g.lineWidth = wide ? 1.9 : 0.8; g.beginPath();
     for (const p of gxArcs) {
@@ -1036,7 +1036,7 @@ function gxDraw(t) {
     g.fillStyle = col.dot;
     for (const d of gxDust) { if (d.gi !== gi) continue; [d.x, d.y] = proj(gxGals[gi], d.r, d.th + spin(d.r)); g.globalAlpha = d.a; g.fillRect(d.x, d.y, d.s, d.s); }
   }
-  g.globalAlpha = 0.3; g.lineWidth = 0.6;
+  g.globalAlpha = 0.16; g.lineWidth = 0.5;
   for (const [gi, col] of GX_DUST.entries()) {
     g.strokeStyle = col.web; g.beginPath();
     for (const [a, b] of gxDustLinks) { if (gxDust[a].gi !== gi) continue; g.moveTo(gxDust[a].x, gxDust[a].y); g.lineTo(gxDust[b].x, gxDust[b].y); }
@@ -1047,15 +1047,14 @@ function gxDraw(t) {
   for (const s of gxStars) {
     if (s.hole) {   // these ride the tilted accretion disk
       const a = s.dth + t * 0.00025, ex = Math.cos(a) * s.dr * HG.Rx, ey = Math.sin(a) * s.dr * HG.Rx * tilt;
-      s.behind = Math.sin(a) < 0 && ex * ex + ey * ey < (hr * 1.05) ** 2;   // hidden behind the sphere
       s.x = hx + ex * Math.cos(HG.rot) - ey * Math.sin(HG.rot); s.y = hy + ex * Math.sin(HG.rot) + ey * Math.cos(HG.rot);
     }
     else [s.x, s.y] = proj(gxGals[s.gi], s.r0, s.th + spin(s.r0));
   }
   // Network lines between neighbours.
-  g.globalAlpha = q ? 0.05 : 0.22; g.lineWidth = 0.6;
+  g.globalAlpha = q ? 0.04 : 0.14; g.lineWidth = 0.5;
   for (const [a, b] of gxLinks) { const A = gxStars[a], B = gxStars[b]; g.strokeStyle = A.cl.color; g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); }
-  // Black hole: a tilted accretion disk wraps a dark sphere. The far half of the disk goes behind the sphere, the near half in front.
+  // Black hole: a dark pit ringed by white-hot gas.
   gxDrawHole(g, hx, hy, hr, t, tilt, HG.rot);
   g.globalCompositeOperation = "lighter";   // overlapping glows add up, like real starlight
   for (const s of gxStars) {
@@ -1069,7 +1068,7 @@ function gxDraw(t) {
   if (gxHover) { g.strokeStyle = "#fff"; g.lineWidth = 1.2; g.beginPath(); g.arc(gxHover.x, gxHover.y, gxHover.r * 2 + 3, 0, 6.29); g.stroke(); }
   // Cluster labels ride along with their patch.
   g.textAlign = "center"; g.font = "800 11px Archivo, system-ui, sans-serif";
-  const boxes = [[hx - hr * 1.1, hy - hr * 1.1, 2.2 * hr, 2.2 * hr]];   // keep names off the sphere
+  const boxes = [[hx - hr * 1.1, hy - hr * 1.1, 2.2 * hr, 2.2 * hr]];   // keep names off the pit
   const pill = (text, x, y, color, font) => {
     g.font = font; const w = g.measureText(text).width + 12;
     x = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x)); y = Math.max(12, Math.min(H - 8, y));
@@ -1096,44 +1095,43 @@ function gxDraw(t) {
   }
   if (gxHover) gxShowTip(gxHover);
 }
-let gxSwirl = [];
+// The black hole: a dark pit sunk into the disk, its far inner wall faintly lit, ringed by white-hot billowing gas
+// that swirls around the rim and fades into the gold and orange clouds.
+let gxRim = [];
 function gxDrawHole(g, hx, hy, hr, t, tilt, rot) {
-  if (!gxSwirl.length) {
+  if (!gxRim.length) {
     let sd = 3; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < 260; i++) gxSwirl.push({ rho: 1.15 + 1.75 * Math.pow(rnd(), 1.6), phi: rnd() * 6.283, len: 0.25 + rnd() * 0.7, w: 0.6 + rnd() * 2.2, a: 0.35 + rnd() * 0.6 });
+    for (let i = 0; i < 260; i++) { const u = Math.pow(rnd(), 1.8); gxRim.push({ rho: 1.02 + 1.3 * u, phi: rnd() * 6.283, s: 0.08 + rnd() * 0.22 * (1 + u), a: 0.12 + rnd() * 0.3, c: u < 0.35 ? 0 : 1 }); }
   }
   const spin = gxReduced() ? 0 : t;
   g.globalAlpha = 1; g.save(); g.translate(hx, hy); g.rotate(rot);
-  // Hot glow around the hole.
   g.globalCompositeOperation = "lighter";
-  const halo = g.createRadialGradient(0, 0, hr * 0.9, 0, 0, hr * 4.2);
-  halo.addColorStop(0, "rgba(255,245,210,.9)"); halo.addColorStop(0.12, "rgba(255,205,110,.55)"); halo.addColorStop(0.35, "rgba(255,120,40,.28)"); halo.addColorStop(0.7, "rgba(190,40,20,.12)"); halo.addColorStop(1, "rgba(120,20,10,0)");
-  g.save(); g.scale(1, 0.62); g.fillStyle = halo; g.beginPath(); g.arc(0, 0, hr * 4.2, 0, 6.29); g.fill(); g.restore();
-  const streaks = front => {
-    for (const p of gxSwirl) {
-      const a0 = p.phi + spin * 0.0012 / Math.pow(p.rho, 1.5);
-      const mid = ((a0 + p.len / 2) % 6.283 + 6.283) % 6.283;
-      if ((mid < Math.PI) !== front) continue;          // sin > 0 is the near side, below the sphere
-      if (front && p.rho < 1.6 && (p.phi * 7) % 1 > 0.5) continue;   // thin out the near side so the sphere still reads
-      const heat = Math.max(0, 1 - (p.rho - 1.15) / 1.75);
-      g.strokeStyle = `rgba(255,${Math.round(90 + 160 * heat)},${Math.round(30 + 190 * heat * heat)},${p.a})`;
-      g.lineWidth = p.w * (0.6 + heat); g.beginPath(); g.ellipse(0, 0, p.rho * hr, p.rho * hr * tilt, 0, a0, a0 + p.len); g.stroke();
-    }
-  };
-  streaks(false);
-  // Light bent over the top of the sphere: a bright lensed arc.
-  g.lineWidth = hr * 0.22; g.strokeStyle = "rgba(255,230,170,.55)"; g.beginPath(); g.ellipse(0, -hr * 0.08, hr * 1.16, hr * 1.12, 0, Math.PI * 1.02, Math.PI * 1.98); g.stroke();
-  // The sphere itself, with a faint rim of reflected light on its lower left.
-  g.globalCompositeOperation = "source-over";
-  const ball = g.createRadialGradient(hr * 0.25, -hr * 0.2, hr * 0.2, 0, 0, hr);
-  ball.addColorStop(0, "#050505"); ball.addColorStop(0.75, "#0b0b0d"); ball.addColorStop(1, "#1c1c22");
-  g.fillStyle = ball; g.beginPath(); g.arc(0, 0, hr, 0, 6.29); g.fill();
-  const rim = g.createLinearGradient(-hr, hr * 0.4, hr * 0.2, -hr * 0.3);
-  rim.addColorStop(0, "rgba(220,220,230,.5)"); rim.addColorStop(0.35, "rgba(120,120,130,.15)"); rim.addColorStop(0.6, "rgba(0,0,0,0)");
-  g.fillStyle = rim; g.beginPath(); g.arc(0, 0, hr, 0, 6.29); g.fill();
+  // Glow of the rim, in the plane of the disk.
+  g.save(); g.scale(1, tilt);
+  const glow = g.createRadialGradient(0, 0, hr * 0.95, 0, 0, hr * 3);
+  glow.addColorStop(0, "rgba(255,250,235,.95)"); glow.addColorStop(0.15, "rgba(255,240,205,.6)"); glow.addColorStop(0.4, "rgba(255,205,120,.28)"); glow.addColorStop(0.75, "rgba(255,130,60,.1)"); glow.addColorStop(1, "rgba(255,110,50,0)");
+  g.fillStyle = glow; g.beginPath(); g.arc(0, 0, hr * 3, 0, 6.29); g.fill();
+  g.restore();
+  // Billows of white gas circling the rim, faster near the edge.
+  if (gxPuffs) for (const p of gxRim) {
+    const a = p.phi + spin * 0.0006 / Math.pow(p.rho, 1.5), x = Math.cos(a) * p.rho * hr, y = Math.sin(a) * p.rho * hr * tilt, s = p.s * hr;
+    g.globalAlpha = p.a; g.drawImage(gxPuffs[p.c], x - s, y - s * 0.8, 2 * s, 1.6 * s);
+  }
+  g.globalAlpha = 1; g.globalCompositeOperation = "source-over";
+  // The pit. Its far inner wall catches a little light; the near lip is a sharp bright edge.
+  const ry = hr * tilt * 1.4;
+  g.save(); g.beginPath(); g.ellipse(0, 0, hr, ry, 0, 0, 6.29); g.clip();
+  const pit = g.createRadialGradient(0, ry * 0.35, 0, 0, ry * 0.35, hr);
+  pit.addColorStop(0, "#000"); pit.addColorStop(0.55, "#030102"); pit.addColorStop(1, "#140a0a");
+  g.fillStyle = pit; g.fillRect(-hr, -ry, 2 * hr, 2 * ry);
+  const wall = g.createLinearGradient(0, -ry, 0, ry * 0.4);
+  wall.addColorStop(0, "rgba(230,215,205,.7)"); wall.addColorStop(0.3, "rgba(140,115,105,.3)"); wall.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = wall; g.fillRect(-hr, -ry, 2 * hr, 2 * ry);
+  g.fillStyle = "#000"; g.beginPath(); g.ellipse(0, ry * 0.3, hr * 0.68, ry * 0.62, 0, 0, 6.29); g.fill();
+  g.restore();
   g.globalCompositeOperation = "lighter";
-  g.lineWidth = 1.5; g.strokeStyle = "rgba(255,240,200,.75)"; g.beginPath(); g.arc(0, 0, hr * 1.02, 0, 6.29); g.stroke();
-  streaks(true);
+  g.lineWidth = 1.6; g.strokeStyle = "rgba(255,250,240,.85)"; g.beginPath(); g.ellipse(0, 0, hr, ry, 0, 0.05 * Math.PI, 0.95 * Math.PI); g.stroke();
+  g.lineWidth = 0.8; g.strokeStyle = "rgba(255,235,210,.4)"; g.beginPath(); g.ellipse(0, 0, hr, ry, 0, Math.PI, 2 * Math.PI); g.stroke();
   g.restore(); g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
 }
 function gxShowTip(s) {
