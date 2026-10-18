@@ -6,7 +6,7 @@
 <title>Notify Pick Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=Archivo+Black&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;900&family=Archivo+Black&family=Inter+Tight:wght@700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 @property --ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 html { overflow-x: clip; } body { margin: 0; } img { max-width: 100%; } [hidden] { display: none !important; }
@@ -225,21 +225,7 @@ td.num { font-family: var(--f-mono); font-size: .84rem; color: var(--ink-2); }
 .gx-lb { margin: 0 -20px -14px; border: 0; box-shadow: none; background: none; border-radius: 0 0 24px 24px; }
 .gx-name { font-weight: 600; }
 .gx-how { margin: 0; max-width: 70ch; }
-:root[data-capper="galaxy"] body { background-color: #030208;
-  background-image:
-    radial-gradient(1px 1px at 23px 41px, #fff, transparent), radial-gradient(1px 1px at 151px 97px, #cfdcff, transparent),
-    radial-gradient(1.4px 1.4px at 87px 173px, #ffe3c4, transparent), radial-gradient(1px 1px at 199px 13px, #fff, transparent),
-    radial-gradient(1px 1px at 61px 229px, #ffd0dc, transparent), radial-gradient(1.6px 1.6px at 233px 157px, #fff, transparent),
-    radial-gradient(1px 1px at 131px 211px, #cfdcff, transparent),
-    radial-gradient(ellipse 60% 420px at 50% -80px, rgba(255,140,110,.16), transparent 70%),
-    radial-gradient(ellipse 45% 50% at 12% 30%, rgba(110,30,80,.22), transparent 70%),
-    radial-gradient(ellipse 40% 45% at 88% 55%, rgba(50,30,120,.22), transparent 70%),
-    radial-gradient(ellipse 50% 40% at 40% 95%, rgba(20,60,100,.18), transparent 70%),
-    linear-gradient(180deg, #05030c 0, #020106 1400px);
-  background-size: 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat; background-attachment: fixed; }
 :root[data-capper="galaxy"] .gx-stage { background: none; }
-:root[data-capper="galaxy"] h1.tinted { background-image: linear-gradient(90deg, #fff 0%, #AFD7FA 35%, #53A0C4 65%, #D68FBC 100%); }
 .legend { display: flex; gap: 16px; font-size: .84rem; color: var(--ink-2); flex-wrap: wrap; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
 
@@ -298,6 +284,131 @@ footer p { margin: 0; max-width: 60ch; }
 @media (prefers-reduced-motion: reduce) {
   .wrap > *, .board, .card h3::before, .dot.live { animation: none; }
   .chip, .tab, tbody tr { transition: none; }
+}
+
+/* Galaxy tab design language, adapted from the NOVA card-scanner reference caleb supplied: near-black violet ground,
+   lilac/violet light with cream and warm accents, Inter Tight display type, Inter copy and JetBrains Mono UI labels,
+   glass tiles with a gradient hairline rim and a pointer-following glow, ghost pill buttons with a solid light
+   primary, pulsing live dots, and soft rise-in reveals. Everything here is scoped to the Galaxy tab. */
+:root[data-capper="galaxy"] {
+  --bg: #050508; --bg-deep: #050508; --surface: #0b0a14;
+  --ink: #ece9ff; --ink-2: rgba(236, 233, 255, .7); --ink-3: rgba(236, 233, 255, .55);
+  --line: rgba(196, 181, 253, .1); --line-2: rgba(196, 181, 253, .22);
+  --lilac: #c4b5fd; --violet: #8b5cf6; --warm: #e3857a; --cream: #f1dba7;
+  --accent: #c4b5fd; --accent-2: #f1dba7; --sun: #c4b5fd;
+  --nav-bg: rgba(5, 5, 8, .72);
+  --f-display: "Inter Tight", "Inter", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+}
+:root[data-capper="galaxy"] body { -webkit-font-smoothing: antialiased; background-color: #050508;
+  background-image:
+    radial-gradient(1px 1px at 23px 41px, #fff, transparent), radial-gradient(1px 1px at 151px 97px, #e4dcff, transparent),
+    radial-gradient(1.4px 1.4px at 87px 173px, #f1dba7, transparent), radial-gradient(1px 1px at 199px 13px, #fff, transparent),
+    radial-gradient(1px 1px at 61px 229px, #c4b5fd, transparent), radial-gradient(1.6px 1.6px at 233px 157px, #fff, transparent),
+    radial-gradient(1px 1px at 131px 211px, #e4dcff, transparent),
+    radial-gradient(ellipse 42% 50% at 70% 18%, rgba(124, 58, 237, .2), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 0% 60%, rgba(76, 29, 149, .16), transparent 70%),
+    radial-gradient(ellipse 50% 420px at 50% -80px, rgba(227, 133, 122, .12), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 85% 95%, rgba(76, 29, 149, .14), transparent 70%),
+    linear-gradient(180deg, #08070f 0, #050508 1400px);
+  background-size: 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat; background-attachment: fixed; }
+:root[data-capper="galaxy"] ::selection { background: var(--lilac); color: #0b0a14; }
+
+/* Nav: mono uppercase links, the selected tab as the solid light pill. */
+:root[data-capper="galaxy"] .tabs { border-bottom: 1px solid rgba(196, 181, 253, .14); }
+:root[data-capper="galaxy"] .tab { font: 500 12px/1 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: rgba(236, 233, 255, .78);
+  border: 1px solid transparent; transition: color .25s, background .25s, border-color .25s, box-shadow .3s; }
+:root[data-capper="galaxy"] .tab:hover { color: #fff; background: rgba(196, 181, 253, .1); border-color: rgba(196, 181, 253, .4); }
+:root[data-capper="galaxy"] .tab[aria-selected="true"] { color: #0b0a14; background: #ece9ff; border-color: #ece9ff; box-shadow: 0 10px 40px rgba(196, 181, 253, .25); }
+:root[data-capper="galaxy"] .tab.team { font: 800 15px/1 var(--f-display); letter-spacing: .16em; }
+:root[data-capper="galaxy"] .tab:focus-visible { outline: 2px solid var(--lilac); outline-offset: 3px; }
+
+/* Hero: eyebrow pill with a live dot, heavy uppercase headline lit by a lilac radial gradient, Inter lede. */
+:root[data-capper="galaxy"] header { gap: 22px; }
+:root[data-capper="galaxy"] header::before { border-color: rgba(196, 181, 253, .14); }
+:root[data-capper="galaxy"] header::after { border-color: rgba(241, 219, 167, .1); }
+:root[data-capper="galaxy"] .eyebrow { gap: 9px; padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(196, 181, 253, .28); background: rgba(196, 181, 253, .05);
+  font: 500 12px/1.3 var(--f-mono); letter-spacing: .14em; color: var(--ink); }
+:root[data-capper="galaxy"] .eyebrow::before { width: 7px; height: 7px; background: #4ade80; box-shadow: 0 0 10px #4ade80; animation: novaPulse 1.6s ease-in-out infinite; }
+:root[data-capper="galaxy"] h1, :root[data-capper="galaxy"] h1.tinted { font-family: var(--f-display); font-weight: 900; line-height: .9; letter-spacing: -.035em;
+  font-size: clamp(2.8rem, 8vw, 6rem); padding: .08em .06em .12em; text-transform: uppercase;
+  background-image: radial-gradient(circle at 50% 30%, oklch(.98 .03 300) 0, oklch(.84 .12 298) 40%, oklch(.66 .2 292) 75%, oklch(.5 .2 288) 100%);
+  filter: drop-shadow(0 0 30px oklch(.65 .22 295 / .28)); }
+:root[data-capper="galaxy"] #blurb { font: 400 clamp(15px, 1.15vw, 18px)/1.6 var(--f-body); letter-spacing: -.005em; color: rgba(236, 233, 255, .7); max-width: 560px; }
+:root[data-capper="galaxy"] .stamp { font: 500 11px/1 var(--f-mono); letter-spacing: .18em; color: rgba(236, 233, 255, .62); min-height: 36px;
+  background: rgba(255, 255, 255, .02); border: 1px solid rgba(196, 181, 253, .2); }
+@media (max-width: 560px) { :root[data-capper="galaxy"] .stamp { font-size: 10px; letter-spacing: .08em; } :root[data-capper="galaxy"] .eyebrow { font-size: 11px; letter-spacing: .1em; } }
+:root[data-capper="galaxy"] .stamp .dot.live { background: #4ade80; box-shadow: 0 0 8px #4ade80; animation: novaPulse 1.6s ease-in-out infinite; }
+
+/* Filters: mono section labels, ghost pills, the active choice as the solid light pill. */
+:root[data-capper="galaxy"] .filters .lbl { font: 500 11px/1 var(--f-mono); letter-spacing: .2em; color: var(--ink-3); }
+:root[data-capper="galaxy"] .chip { min-height: 38px; padding: 0 16px; font: 500 12px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink);
+  background: rgba(255, 255, 255, .02); box-shadow: inset 0 0 0 1px rgba(196, 181, 253, .28); translate: none;
+  transition: transform .3s, box-shadow .3s, background .3s, color .25s; }
+:root[data-capper="galaxy"] .chip:hover { color: #fff; background: rgba(196, 181, 253, .1); box-shadow: inset 0 0 0 1px var(--lilac); }
+:root[data-capper="galaxy"] .chip[aria-pressed="true"] { color: #0b0a14; background: #ece9ff; box-shadow: 0 10px 40px rgba(196, 181, 253, .25); translate: none; }
+:root[data-capper="galaxy"] .chip[aria-pressed="true"]:hover { transform: translateY(-2px); box-shadow: 0 14px 50px rgba(196, 181, 253, .42); }
+:root[data-capper="galaxy"] .chip:focus-visible, :root[data-capper="galaxy"] input:focus-visible { outline: 2px solid var(--lilac); outline-offset: 4px; }
+
+/* Tiles: dark violet glass, hairline gradient rim from lilac to cream, deep shadow, and a glow that follows the pointer. */
+:root[data-capper="galaxy"] .gx .card { border-radius: 20px; border: 1px solid transparent; isolation: isolate;
+  background: linear-gradient(180deg, rgba(22, 18, 40, .72), rgba(10, 9, 18, .85)) padding-box,
+    linear-gradient(150deg, rgba(196, 181, 253, .5), rgba(196, 181, 253, .06) 35%, rgba(196, 181, 253, .04) 65%, rgba(241, 219, 167, .34)) border-box;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .04); }
+:root[data-capper="galaxy"] .gx .card::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 0%), rgba(139, 92, 246, .14), transparent 60%); opacity: 0; transition: opacity .4s; }
+:root[data-capper="galaxy"] .gx .card:hover::after { opacity: 1; }
+:root[data-capper="galaxy"] .gx .card h3 { font: 500 11px/1.2 var(--f-mono); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3);
+  background: none; -webkit-text-fill-color: currentColor; border-bottom-color: rgba(196, 181, 253, .12); padding: 18px 24px; margin: 0 -20px 8px; }
+:root[data-capper="galaxy"] .gx .card h3::before { width: 6px; height: 6px; background: #4ade80; box-shadow: 0 0 8px #4ade80; animation: novaPulse 1.6s ease-in-out infinite; }
+:root[data-capper="galaxy"] .gx .gx-count { color: var(--lilac); letter-spacing: .18em; }
+
+/* Search: mono input on glass, lilac focus ring with a violet glow. */
+:root[data-capper="galaxy"] .gx-tools input { font: 400 13px/1 var(--f-mono); letter-spacing: .04em; border-radius: 999px; padding: 0 20px; color: var(--ink);
+  background: rgba(255, 255, 255, .02); border: 1px solid rgba(196, 181, 253, .28); transition: border-color .25s, box-shadow .3s; }
+:root[data-capper="galaxy"] .gx-tools input::placeholder { color: rgba(236, 233, 255, .4); text-transform: uppercase; letter-spacing: .14em; font-size: 11.5px; }
+:root[data-capper="galaxy"] .gx-tools input:focus { border-color: var(--lilac); box-shadow: 0 0 0 4px rgba(196, 181, 253, .12), 0 0 40px rgba(139, 92, 246, .2); }
+
+/* Stage: fades in from a blur, like the reference scene. */
+:root[data-capper="galaxy"] .gx-stage { animation: novaSceneIn 1.2s var(--ease-out) both .15s; }
+:root[data-capper="galaxy"] .gx-stage .tip { font: 500 12px/1.5 var(--f-mono); color: rgba(226, 218, 255, .9); border-radius: 14px;
+  border: 1px solid rgba(196, 181, 253, .3); background: linear-gradient(160deg, rgba(46, 30, 96, .78), rgba(10, 8, 22, .9));
+  box-shadow: inset 0 0 0 1px rgba(196, 181, 253, .04), 0 0 40px rgba(139, 92, 246, .22), 0 14px 34px rgba(0, 0, 0, .5); }
+:root[data-capper="galaxy"] .gx-stage .tip b { font-family: var(--f-display); font-weight: 700; color: #fff; letter-spacing: -.01em; }
+
+/* Legend and notes: Inter copy, mono counts. */
+:root[data-capper="galaxy"] .gx-legend { font: 400 13px/1.5 var(--f-body); color: rgba(236, 233, 255, .66); }
+:root[data-capper="galaxy"] .gx-legend b { font-family: var(--f-display); font-weight: 700; color: #f1eeff; letter-spacing: -.01em; }
+:root[data-capper="galaxy"] .gx-how { font: 400 14px/1.6 var(--f-body); color: rgba(236, 233, 255, .55); }
+
+/* Leaderboards: ledger-style rows, mono headers and numbers, Inter names. */
+:root[data-capper="galaxy"] .gx table { font: 400 13.5px/1.4 var(--f-body); }
+:root[data-capper="galaxy"] .gx th { font: 500 10.5px/1 var(--f-mono); letter-spacing: .16em; color: rgba(236, 233, 255, .38); }
+:root[data-capper="galaxy"] .gx td { border-bottom-color: rgba(196, 181, 253, .08); }
+:root[data-capper="galaxy"] .gx td.n { font: 500 13px/1 var(--f-mono); color: #ece9ff; }
+:root[data-capper="galaxy"] .gx td.n.pos { color: #86efac; text-shadow: 0 0 14px rgba(74, 222, 128, .35); }
+:root[data-capper="galaxy"] .gx td.n.neg { color: #fca5a5; text-shadow: 0 0 14px rgba(248, 113, 113, .3); }
+:root[data-capper="galaxy"] .gx tbody tr:hover { background: rgba(196, 181, 253, .05); }
+:root[data-capper="galaxy"] .gx .gx-name { font-weight: 600; color: rgba(236, 233, 255, .9); }
+:root[data-capper="galaxy"] .gx td .small { font: 500 10.5px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--lilac); opacity: .8; }
+
+/* Footer copy picks up the same type. */
+:root[data-capper="galaxy"] footer { font-family: var(--f-body); color: var(--ink-3); }
+:root[data-capper="galaxy"] footer .mark { font: 800 15px/1 var(--f-display); letter-spacing: .16em; }
+
+/* Motion: slower, springier rise-in reveals; pulsing live dots. */
+:root[data-capper="galaxy"] .wrap > * { animation: novaRise .9s var(--ease-out) both; }
+:root[data-capper="galaxy"] .wrap > *:nth-child(2) { animation-delay: .08s; } :root[data-capper="galaxy"] .wrap > *:nth-child(3) { animation-delay: .16s; }
+:root[data-capper="galaxy"] .wrap > *:nth-child(4) { animation-delay: .24s; } :root[data-capper="galaxy"] .wrap > *:nth-child(n+5) { animation-delay: .32s; }
+@keyframes novaRise { from { opacity: 0; translate: 0 22px; } }
+@keyframes novaPulse { 50% { opacity: .35; } }
+@keyframes novaSceneIn { from { opacity: 0; filter: blur(8px); } to { opacity: 1; filter: blur(0); } }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-capper="galaxy"] .wrap > *, :root[data-capper="galaxy"] .gx-stage, :root[data-capper="galaxy"] .eyebrow::before,
+  :root[data-capper="galaxy"] .stamp .dot.live, :root[data-capper="galaxy"] .gx .card h3::before { animation: none; }
 }
 </style>
 
@@ -1002,6 +1113,7 @@ function gxBackdrop(W, H, dpr) {
   g.globalCompositeOperation = "source-over";
   return off;
 }
+const GX_LABEL_FONT = '500 10.5px "JetBrains Mono", ui-monospace, Menlo, monospace', GX_NAME_FONT = '500 11.5px Inter, system-ui, sans-serif';
 const GX_DUST = [{ dot: "#ffe6bd", web: "#ffd08a" }, { dot: "#ffc0a0", web: "#ff8fc0" }];
 function gxDraw(t) {
   const canvas = document.getElementById("gxCanvas"); if (!gxSize) return;
@@ -1080,30 +1192,30 @@ function gxDraw(t) {
   g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
   if (gxHover) { g.strokeStyle = "#fff"; g.lineWidth = 1.2; g.beginPath(); g.arc(gxHover.x, gxHover.y, gxHover.r * 2 + 3, 0, 6.29); g.stroke(); }
   // Cluster labels ride along with their patch.
-  g.textAlign = "center"; g.font = "800 11px Archivo, system-ui, sans-serif";
+  g.textAlign = "center"; g.font = GX_LABEL_FONT;
   const boxes = [[hx - hr * 1.1, hy - hr * 1.1, 2.2 * hr, 2.2 * hr]];   // keep names off the pit
   const pill = (text, x, y, color, font) => {
-    g.font = font; const w = g.measureText(text).width + 12;
+    g.font = font; g.letterSpacing = "1.5px"; const w = g.measureText(text).width + 14;
     x = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x)); y = Math.max(12, Math.min(H - 8, y));
     const box = [x - w / 2, y - 11, w, 16];
     if (boxes.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + box[3] && box[1] < b[1] + b[3])) return;
-    boxes.push(box); g.fillStyle = "rgba(6,10,28,.72)"; g.fillRect(...box); g.fillStyle = color; g.fillText(text, x, y + 1);
+    boxes.push(box); g.fillStyle = "rgba(11,10,20,.8)"; g.fillRect(...box); g.strokeStyle = "rgba(196,181,253,.28)"; g.lineWidth = 1; g.strokeRect(box[0] + .5, box[1] + .5, box[2] - 1, box[3] - 1); g.fillStyle = color; g.fillText(text, x, y + 1);
   };
   if (!q) {
     for (const L of gxLabels) {
       let x, y;
       if (L.hole) { x = hx; y = hy - hr * 1.5 - 16; }
       else { [x, y] = proj(gxGals[L.gi], L.r, L.th + spin(L.r)); y += L.dy || -18; }
-      pill(L.text.toUpperCase(), x, y, L.color, "800 11px Archivo, system-ui, sans-serif");
+      pill(L.text.toUpperCase(), x, y, L.color, GX_LABEL_FONT);
     }
     // Name the top Supernovas and Black holes.
-    g.textAlign = "left";
+    g.textAlign = "left"; g.letterSpacing = "0px";
     for (const k of ["nova", "hole"]) gxStars.filter(s => s.cl.k === k && !s.behind).slice(0, 3).forEach(s => {
-      g.font = "600 11px Archivo, system-ui, sans-serif"; const w = g.measureText(s.p.name).width + 8;
+      g.font = GX_NAME_FONT; const w = g.measureText(s.p.name).width + 8;
       let x = s.x + s.r + 5; if (x + w > W - 4) x = s.x - s.r - 5 - w;
       const box = [x, s.y - 8, w, 15];
       if (boxes.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + box[3] && box[1] < b[1] + b[3])) return;
-      boxes.push(box); g.fillStyle = "rgba(6,10,28,.72)"; g.fillRect(...box); g.fillStyle = s.cl.color; g.fillText(s.p.name, x + 4, s.y + 3);
+      boxes.push(box); g.fillStyle = "rgba(11,10,20,.8)"; g.fillRect(...box); g.fillStyle = s.cl.color; g.fillText(s.p.name, x + 4, s.y + 3);
     });
   }
   if (gxHover) gxShowTip(gxHover);
@@ -1175,6 +1287,10 @@ function gxStop() { cancelAnimationFrame(gxRaf); gxRaf = 0; }
 function setupGalaxy() {
   const canvas = document.getElementById("gxCanvas");
   canvas.addEventListener("pointermove", gxPick); canvas.addEventListener("pointerdown", gxPick);
+  // Tiles glow where the pointer is.
+  document.querySelectorAll("#galaxySec .card").forEach(c => c.addEventListener("pointermove", e => {
+    const r = c.getBoundingClientRect(); c.style.setProperty("--mx", e.clientX - r.left + "px"); c.style.setProperty("--my", e.clientY - r.top + "px");
+  }));
   canvas.addEventListener("pointerleave", () => { gxHover = null; document.getElementById("gxTip").hidden = true; if (gxReduced()) gxDraw(0); });
   document.getElementById("gxQ").addEventListener("input", e => {
     gxQuery = e.target.value.trim().toLowerCase(); gxHover = null;
