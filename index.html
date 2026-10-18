@@ -825,10 +825,10 @@ function renderGalaxy() {
   lb("gxBottom", byNet.slice(-10).reverse().filter(p => p.net < 0));
   gxSize = null; gxLayout(); gxStart();
 }
-// Two tilted galaxies side by side. The winners' galaxy has the Supernovas as its bright core, with Rising stars and
-// Drifters in patches along its arms. The losers' galaxy turns around a black hole: the Black holes ride its accretion
-// disk and the Fading players trail along its arms. Positions live on a unit disk per galaxy (r 0–1) that turns slowly,
-// inner stars faster, and is tilted and rotated onto the canvas.
+// One tilted, cloudy spiral galaxy. Supernovas form the bright core, Rising stars, Drifters and Fading players sit in
+// patches along the arms, and the Black holes ride the accretion disk of a black hole about midway out, between two arms.
+// Positions live on a unit disk (r 0–1) that turns slowly, inner stars faster, and is tilted and rotated onto the canvas.
+// gxGals holds that one disk; the drawing code works for any number of them.
 const GX_ARMS = 3, GX_WIND = 1.35;
 const gxArm = (arm, r) => arm * 2 * Math.PI / GX_ARMS + r * GX_WIND * Math.PI;
 let gxGals = [], gxDust = [], gxDustLinks = [], gxArcs = [], gxLinks = [], gxLabels = [], gxHole = null, gxSprites = {};
@@ -844,15 +844,9 @@ function gxLayout() {
   const phone = W < 640;
   const dpr = Math.min(devicePixelRatio || 1, 2);
   let H;
-  if (phone) {   // stacked
-    const Rx = W * 0.45, Ry = Rx * 0.5;
-    H = Math.round(4 * Ry + 140);
-    gxGals = [{ cx: W / 2, cy: Ry + 50, Rx, Ry, rot: -0.12 }, { cx: W / 2, cy: H - Ry - 45, Rx, Ry, rot: -0.22 }];
-  } else {       // side by side, offset on a diagonal like two merging galaxies
-    const Rx = W * 0.255, Ry = Rx * 0.46;
-    H = Math.round(2 * Ry + Rx * 0.5 + 110);
-    gxGals = [{ cx: W * 0.27, cy: H * 0.42, Rx, Ry, rot: -0.12 }, { cx: W * 0.73, cy: H * 0.58, Rx, Ry, rot: -0.22 }];
-  }
+  const Rx = W * (phone ? 0.46 : 0.44), Ry = Rx * (phone ? 0.62 : 0.46);
+  H = Math.round(2 * Ry + Rx * 0.2 + (phone ? 80 : 100));
+  gxGals = [{ cx: W / 2, cy: H / 2 + 8, Rx, Ry, rot: -0.1 }];
   canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.height = H + "px";
   gxSize = { W, H, dpr, phone, scale: phone ? 0.62 : 0.8 };
   let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -892,17 +886,16 @@ function gxLayout() {
       if (big && ps.length) gxLabels.push({ gi, text: `${cl.name} · ${ps.length}`, color: cl.color, r: (big.r0 + big.r1) / 2, th: gxArm(big.arm, (big.r0 + big.r1) / 2) });
     }
   };
-  // Winners' galaxy: Supernovas in the core, biggest winners dead centre.
+  // Supernovas in the core, biggest winners dead centre.
   const nova = by.nova.players;
   nova.forEach((p, j) => add(0, p, by.nova, 0.14 * Math.sqrt((j + 0.5) / Math.max(nova.length, 1)), j * 2.39996323));
   if (nova.length) gxLabels.push({ gi: 0, text: `${by.nova.name} · ${nova.length}`, color: by.nova.color, r: 0, th: 0, dy: -(0.16 * gxGals[0].Ry + 18) });
-  arms(0, ["drift", "rise"], 0.2);
-  // Losers' galaxy: a black hole at the centre with the Black holes on its accretion disk, Fading players on the arms.
-  gxHole = { gi: 1, size: 0.15 };
+  arms(0, ["fade", "drift", "rise"], 0.18);
+  // The black hole sits between two arms about midway out; the Black holes ride its accretion disk.
+  gxHole = { gi: 0, r: 0.6, th: gxArm(0, 0.6) + Math.PI / GX_ARMS, size: phone ? 0.085 : 0.075 };
   const hole = by.hole.players;
-  hole.forEach((p, j) => add(1, p, by.hole, 0, 0, { hole: true, dr: gxHole.size * (1.5 + 1.3 * Math.sqrt((j + 0.5) / hole.length)), dth: j * 2.39996323 }));
-  if (hole.length) gxLabels.push({ gi: 1, text: `${by.hole.name} · ${hole.length}`, color: by.hole.color, hole: true });
-  arms(1, ["fade"], 0.46);
+  hole.forEach((p, j) => add(0, p, by.hole, 0, 0, { hole: true, dr: gxHole.size * (1.5 + 1.3 * Math.sqrt((j + 0.5) / hole.length)), dth: j * 2.39996323 }));
+  if (hole.length) gxLabels.unshift({ gi: 0, text: `${by.hole.name} · ${hole.length}`, color: by.hole.color, hole: true });
   // Dust: unlabelled specks that trace the arms and fill each disk, plus warm swirl streaks like an accretion disk.
   gxDust = []; gxArcs = [];
   gxGals.forEach((G, gi) => {
@@ -929,7 +922,7 @@ function gxLayout() {
   }
   gxBg = gxBackdrop(W, H, dpr);
   gxGals.forEach((G, gi) => {
-    G.cloud = gxCloud(gi, Math.min(800, Math.ceil(2.3 * G.Rx * dpr)), 29 + gi * 97);
+    G.cloud = gxCloud(gi, Math.min(1000, Math.ceil(2.3 * G.Rx * dpr)), 29 + gi * 97);
     // A dark copy of the clouds, drawn a little lower, gives the gas some thickness.
     G.shade = document.createElement("canvas"); G.shade.width = G.shade.height = G.cloud.width;
     const sg = G.shade.getContext("2d"); sg.drawImage(G.cloud, 0, 0); sg.globalCompositeOperation = "source-in"; sg.fillStyle = "#050106"; sg.fillRect(0, 0, G.cloud.width, G.cloud.width);
@@ -1062,7 +1055,7 @@ function gxDraw(t) {
     for (const [a, b] of gxDustLinks) { if (gxDust[a].gi !== gi) continue; g.moveTo(gxDust[a].x, gxDust[a].y); g.lineTo(gxDust[b].x, gxDust[b].y); }
     g.stroke();
   }
-  const HG = gxGals[gxHole.gi], hx = HG.cx, hy = HG.cy, hr = gxHole.size * HG.Rx, tilt = HG.Ry / HG.Rx;
+  const HG = gxGals[gxHole.gi], [hx, hy] = proj(HG, gxHole.r, gxHole.th + spin(gxHole.r)), hr = gxHole.size * HG.Rx, tilt = HG.Ry / HG.Rx;
   const q = gxQuery, reduced = gxReduced();
   for (const s of gxStars) {
     if (s.hole) {   // these ride the tilted accretion disk
