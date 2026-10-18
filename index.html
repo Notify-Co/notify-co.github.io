@@ -866,6 +866,8 @@ const NICKNAMES = { AD: "Anthony Davis", AT: "Alyssa Thomas", KD: "Kevin Durant"
   "NBA:FILIP": "Filipowski", "NBA:WCJ": "Wendell Carter Jr.", "NBA:CARTER JR.": "Wendell Carter Jr.", "NBA:ANTHONY": "Cole Anthony", "NBA:MCDANIELS": "Jaden McDaniels" };
 // Multi-player DFS entries (Flex, F5, 4 Man, Power 3) don't name who's in them, so they stay off the map.
 const SKIP_ENTRY = /\b(Flex|F5|4 Man|P3|Power 3)\b/i;
+// "+ Ladder" is a ladder on the same player's prop, not another player, so it is dropped before the legs are split.
+const LADDER = /\s*\+?\s*\[?\bLadder\b(\s+Incl\.?)?\]?/gi;
 function playerOf(leg, teamPlay) {
   const toks = leg.split(/\s+/);
   while (toks.length && BOOK_TAGS.test(toks[toks.length - 1])) toks.pop();
@@ -882,6 +884,7 @@ function playerOf(leg, teamPlay) {
 }
 function playersIn(play) {
   if (SKIP_ENTRY.test(play)) return { legs: 1, players: [] };
+  play = play.replace(LADDER, "");
   const legs = play.split(LEG_SPLIT).map(s => s.trim()).filter(Boolean);
   const teamPlay = /\b(ML|DBL|Total|to (QF|SF|win|make|advance))\b|\s[+-]\d/i.test(play);
   return { legs: legs.length, players: legs.map(l => playerOf(l, teamPlay)).filter(Boolean) };
@@ -1126,6 +1129,54 @@ function gxBackdrop(W, H, dpr) {
 }
 const GX_LABEL_FONT = '500 10.5px "JetBrains Mono", ui-monospace, Menlo, monospace', GX_NAME_FONT = '500 11.5px Inter, system-ui, sans-serif';
 const GX_DUST = [{ dot: "#ffe6bd", web: "#ffd08a" }, { dot: "#ffc0a0", web: "#ff8fc0" }];
+// Lightning storms: every few seconds a patch of cloud lights up with a flickering burst and a forked bolt.
+// A storm lives on the disk (r, th), so it drifts with the clouds while it flashes.
+let gxStorms = [], gxNextStorm = 0;
+function gxStorm(t) {
+  let sd = (t * 1000) | 0 || 1; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  const bolt = (x, y, ang, n, len) => {
+    const pts = [[x, y]];
+    for (let i = 0; i < n; i++) { ang += (rnd() - 0.5) * 1.1; x += Math.cos(ang) * len * (0.6 + rnd() * 0.8); y += Math.sin(ang) * len * 0.45 * (0.6 + rnd() * 0.8); pts.push([x, y]); }
+    return pts;
+  };
+  const bolts = [], n = 2 + Math.floor(rnd() * 2);
+  for (let b = 0; b < n; b++) {
+    const main = bolt(0, 0, rnd() * 6.283, 8 + Math.floor(rnd() * 5), 0.038);
+    bolts.push({ pts: main, w: 1.6 });
+    const at = main[2 + Math.floor(rnd() * (main.length - 3))];   // a fork off the main channel
+    bolts.push({ pts: bolt(at[0], at[1], rnd() * 6.283, 3 + Math.floor(rnd() * 3), 0.03), w: 0.9 });
+  }
+  const flashes = [0, 70 + rnd() * 60, 240 + rnd() * 160].concat(rnd() < 0.5 ? [520 + rnd() * 200] : []);
+  return { t0: t, r: 0.25 + rnd() * 0.6, th: rnd() * 6.283, bolts, flashes, hue: rnd() < 0.5 ? "214,200,255" : "255,226,190" };
+}
+function gxDrawStorms(g, t, proj, spin) {
+  if (t > gxNextStorm) {
+    gxStorms.push(gxStorm(t));
+    if (Math.random() < 0.35) gxStorms.push({ ...gxStorm(t + 1), t0: t + 180 });   // sometimes a second cell answers nearby
+    gxNextStorm = t + 2600 + Math.random() * 5200;
+  }
+  gxStorms = gxStorms.filter(s => t - s.t0 < 1500);
+  const G = gxGals[0];
+  g.globalCompositeOperation = "lighter";
+  for (const s of gxStorms) {
+    const dt = t - s.t0; if (dt < 0) continue;
+    const I = Math.max(...s.flashes.map(f => dt >= f ? Math.exp(-(dt - f) / 110) : 0));
+    if (I < 0.02) continue;
+    const [x, y] = proj(G, s.r, s.th + spin(s.r)), R = G.Rx;
+    // The cloud around the strike lights up from inside.
+    const glow = g.createRadialGradient(x, y, 0, x, y, R * 0.3);
+    glow.addColorStop(0, `rgba(255,255,255,${I})`); glow.addColorStop(0.2, `rgba(${s.hue},${0.7 * I})`); glow.addColorStop(0.55, `rgba(${s.hue},${0.22 * I})`); glow.addColorStop(1, `rgba(${s.hue},0)`);
+    g.globalAlpha = 1; g.fillStyle = glow; g.save(); g.translate(x, y); g.scale(1, 0.6); g.translate(-x, -y);
+    g.beginPath(); g.arc(x, y, R * 0.3, 0, 6.29); g.fill(); g.restore();
+    // The bolt: a soft wide stroke for the glow and a thin white core.
+    for (const b of s.bolts) {
+      g.beginPath(); b.pts.forEach(([px, py], i) => i ? g.lineTo(x + px * R, y + py * R) : g.moveTo(x + px * R, y + py * R));
+      g.strokeStyle = `rgba(${s.hue},${0.55 * I})`; g.lineWidth = b.w * 5; g.stroke();
+      g.strokeStyle = `rgba(255,255,255,${0.95 * I})`; g.lineWidth = b.w; g.stroke();
+    }
+  }
+  g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+}
 function gxDraw(t) {
   const canvas = document.getElementById("gxCanvas"); if (!gxSize) return;
   const { W, H, dpr } = gxSize, g = canvas.getContext("2d");
@@ -1178,6 +1229,7 @@ function gxDraw(t) {
     for (const [a, b] of gxDustLinks) { if (gxDust[a].gi !== gi) continue; g.moveTo(gxDust[a].x, gxDust[a].y); g.lineTo(gxDust[b].x, gxDust[b].y); }
     g.stroke();
   }
+  if (!gxReduced() && t) gxDrawStorms(g, t, proj, spin);
   const HG = gxGals[gxHole.gi], [hx, hy] = proj(HG, gxHole.r, gxHole.th + spin(gxHole.r)), hr = gxHole.size * HG.Rx, tilt = HG.Ry / HG.Rx;
   const q = gxQuery, reduced = gxReduced();
   for (const s of gxStars) {
