@@ -225,6 +225,20 @@ td.num { font-family: var(--f-mono); font-size: .84rem; color: var(--ink-2); }
 .gx-lb { margin: 0 -20px -14px; border: 0; box-shadow: none; background: none; border-radius: 0 0 24px 24px; }
 .gx-name { font-weight: 600; }
 .gx-how { margin: 0; max-width: 70ch; }
+:root[data-capper="galaxy"] body { background-color: #030208;
+  background-image:
+    radial-gradient(1px 1px at 23px 41px, #fff, transparent), radial-gradient(1px 1px at 151px 97px, #cfdcff, transparent),
+    radial-gradient(1.4px 1.4px at 87px 173px, #ffe3c4, transparent), radial-gradient(1px 1px at 199px 13px, #fff, transparent),
+    radial-gradient(1px 1px at 61px 229px, #ffd0dc, transparent), radial-gradient(1.6px 1.6px at 233px 157px, #fff, transparent),
+    radial-gradient(1px 1px at 131px 211px, #cfdcff, transparent),
+    radial-gradient(ellipse 60% 420px at 50% -80px, rgba(255,140,110,.16), transparent 70%),
+    radial-gradient(ellipse 45% 50% at 12% 30%, rgba(110,30,80,.22), transparent 70%),
+    radial-gradient(ellipse 40% 45% at 88% 55%, rgba(50,30,120,.22), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 40% 95%, rgba(20,60,100,.18), transparent 70%),
+    linear-gradient(180deg, #05030c 0, #020106 1400px);
+  background-size: 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 250px 250px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat; background-attachment: fixed; }
+:root[data-capper="galaxy"] .gx-stage { background: none; }
 :root[data-capper="galaxy"] h1.tinted { background-image: linear-gradient(90deg, #fff 0%, #AFD7FA 35%, #53A0C4 65%, #D68FBC 100%); }
 .legend { display: flex; gap: 16px; font-size: .84rem; color: var(--ink-2); flex-wrap: wrap; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
@@ -914,23 +928,77 @@ function gxLayout() {
     if (best >= 0) gxDustLinks.push([i, best]);
   }
   gxBg = gxBackdrop(W, H, dpr);
+  gxGals.forEach((G, gi) => { G.cloud = gxCloud(gi, Math.min(800, Math.ceil(2.3 * G.Rx * dpr)), 29 + gi * 97); });
+}
+// Cloud texture for one galaxy, painted once in disk space (unit radius 1.15) and spun as a whole each frame:
+// soft puffs along the arms, cream-white in the middle through gold and orange to rust and magenta at the rim,
+// with a grain of bright and dark specks so it reads as billowing gas and dust.
+const GX_PUFF = ["255,246,222", "255,214,120", "255,150,64", "222,78,52", "176,64,160"];
+let gxPuffs = null;
+function gxCloud(gi, S, seed0) {
+  if (!gxPuffs) gxPuffs = GX_PUFF.concat(["30,6,10"]).map(c => {
+    const s = document.createElement("canvas"); s.width = s.height = 64;
+    const g = s.getContext("2d"), grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, `rgba(${c},1)`); grad.addColorStop(0.45, `rgba(${c},.45)`); grad.addColorStop(1, `rgba(${c},0)`);
+    g.fillStyle = grad; g.fillRect(0, 0, 64, 64); return s;
+  });
+  const off = document.createElement("canvas"); off.width = off.height = S;
+  const g = off.getContext("2d"), k = S / 2.3, c = S / 2;   // unit → px
+  let sd = seed0; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
+  const hole = gi === 1, rIn = hole ? 0.13 : 0;
+  const tint = r => Math.max(0, Math.min(4, Math.floor((r - rIn) / (1.05 - rIn) * 4.6 + gauss() * 0.6)));
+  const puff = (ci, r, th, size, a) => { g.globalAlpha = a; const x = c + r * Math.cos(th) * k, y = c + r * Math.sin(th) * k, s = size * k; g.drawImage(gxPuffs[ci], x - s, y - s, 2 * s, 2 * s); };
+  const where = onArm => { const r = rIn + (1.08 - rIn) * Math.pow(rnd(), onArm ? 0.9 : 0.75); return [r, onArm ? gxArm(Math.floor(rnd() * GX_ARMS), r) + gauss() * 0.55 : rnd() * 6.283]; };
+  // Body of the clouds.
+  for (let i = 0; i < 1500; i++) { const [r, th] = where(rnd() < 0.7); puff(tint(r), r, th, 0.04 + rnd() * 0.11 * (0.6 + r), 0.04 + rnd() * 0.1); }
+  // Dark lanes and clumps between the bright gas.
+  for (let i = 0; i < 1100; i++) { const [r, th] = where(rnd() < 0.3); puff(5, r, th, 0.015 + rnd() * 0.06, 0.2 + rnd() * 0.35); }
+  // Bright billows and fine grain on top.
+  g.globalCompositeOperation = "lighter";
+  for (let i = 0; i < 2600; i++) { const [r, th] = where(rnd() < 0.75); puff(Math.max(0, tint(r) - 1), r, th, 0.008 + rnd() * 0.028, 0.06 + rnd() * 0.18); }
+  // Hot inner ring: a white-hot rim around the hole, or the blazing core of the winners' galaxy.
+  for (let i = 0; i < 500; i++) { const r = hole ? 0.13 + Math.abs(gauss()) * 0.14 : Math.abs(gauss()) * 0.2, th = rnd() * 6.283; puff(r < 0.16 ? 0 : 1, r, th, 0.02 + rnd() * 0.05, 0.05 + rnd() * 0.12); }
+  g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+  return off;
 }
 function gxBackdrop(W, H, dpr) {
   const off = document.createElement("canvas"); off.width = W * dpr; off.height = H * dpr;
   const g = off.getContext("2d"); g.scale(dpr, dpr);
   let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < W * H / 700; i++) { g.fillStyle = `rgba(210,200,255,${0.06 + rnd() * 0.25})`; g.fillRect(rnd() * W, rnd() * H, 1, 1); }
-  // Each disk glows white-hot in the middle, then gold, orange and a magenta rim.
+  const blob = (x, y, rx, ry, color, a) => {
+    g.save(); g.translate(x, y); g.scale(1, ry / rx);
+    const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, `rgba(${color},${a})`); gr.addColorStop(1, `rgba(${color},0)`);
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, 6.29); g.fill(); g.restore();
+  };
+  // Deep space: faint nebula wisps, then stars of every size, a few with a soft glow.
   g.globalCompositeOperation = "lighter";
+  for (let i = 0; i < 14; i++) blob(rnd() * W, rnd() * H, W * (0.12 + rnd() * 0.25), H * (0.1 + rnd() * 0.3), ["120,30,70", "60,30,120", "20,60,110", "140,60,30"][i % 4], 0.07 + rnd() * 0.07);
+  blob(W * 0.5, -H * 0.08, W * 0.32, H * 0.42, "255,150,120", 0.32);   // warm light falling from above, as in the reference
+  for (let i = 0; i < W * H / 520; i++) {
+    const big = rnd() < 0.04, x = rnd() * W, y = rnd() * H, hue = ["255,255,255", "200,215,255", "255,225,190", "255,190,200"][Math.floor(rnd() * 4)];
+    g.fillStyle = `rgba(${hue},${0.08 + rnd() * (big ? 0.7 : 0.35)})`;
+    if (big) { blob(x, y, 4 + rnd() * 5, 4 + rnd() * 5, hue, 0.22); g.beginPath(); g.arc(x, y, 0.9 + rnd() * 0.6, 0, 6.29); g.fill(); }
+    else g.fillRect(x, y, rnd() < 0.85 ? 1 : 1.6, rnd() < 0.85 ? 1 : 1.6);
+  }
+  // A wide glow around each disk, white-hot in the middle, then gold, orange and a magenta rim.
   gxGals.forEach((G, gi) => {
     g.save(); g.translate(G.cx, G.cy); g.rotate(G.rot); g.scale(1, G.Ry / G.Rx);
-    const R = G.Rx * 1.12, disk = g.createRadialGradient(0, 0, 0, 0, 0, R);
-    if (gi === 0) { disk.addColorStop(0, "rgba(255,252,235,.9)"); disk.addColorStop(0.12, "rgba(255,226,150,.55)"); }
-    else { disk.addColorStop(0, "rgba(255,150,70,.35)"); disk.addColorStop(0.18, "rgba(255,170,90,.4)"); }
-    disk.addColorStop(0.4, "rgba(255,140,60,.22)"); disk.addColorStop(0.72, "rgba(205,60,160,.14)"); disk.addColorStop(1, "rgba(120,40,160,0)");
+    const R = G.Rx * 1.5, disk = g.createRadialGradient(0, 0, 0, 0, 0, R);
+    if (gi === 0) { disk.addColorStop(0, "rgba(255,252,235,.7)"); disk.addColorStop(0.1, "rgba(255,226,150,.42)"); }
+    else { disk.addColorStop(0, "rgba(255,150,70,.3)"); disk.addColorStop(0.14, "rgba(255,190,110,.5)"); }
+    disk.addColorStop(0.32, "rgba(255,140,60,.26)"); disk.addColorStop(0.55, "rgba(205,60,120,.14)"); disk.addColorStop(0.8, "rgba(130,40,140,.06)"); disk.addColorStop(1, "rgba(90,30,120,0)");
     g.fillStyle = disk; g.beginPath(); g.arc(0, 0, R, 0, 6.29); g.fill();
     g.restore();
   });
+  // A bridge of gas where the two galaxies meet.
+  if (gxGals.length === 2) {
+    const [A, B] = gxGals;
+    for (let i = 0; i < 70; i++) {
+      const u = 0.25 + rnd() * 0.5, x = A.cx + (B.cx - A.cx) * u + (rnd() - 0.5) * A.Rx * 0.5, y = A.cy + (B.cy - A.cy) * u + (rnd() - 0.5) * A.Ry * 0.6;
+      blob(x, y, A.Rx * (0.08 + rnd() * 0.16), A.Ry * (0.08 + rnd() * 0.16), ["255,150,64", "222,78,52", "176,64,160", "255,214,120"][i % 4], 0.08 + rnd() * 0.08);
+    }
+  }
   g.globalCompositeOperation = "source-over";
   return off;
 }
@@ -941,6 +1009,11 @@ function gxDraw(t) {
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
   if (gxBg) g.drawImage(gxBg, 0, 0, W, H);
   const spin = r => t * 0.000032 / (0.22 + r);   // inner stars orbit faster
+  for (const G of gxGals) if (G.cloud) {
+    g.save(); g.translate(G.cx, G.cy); g.rotate(G.rot); g.scale(1, G.Ry / G.Rx); g.rotate(spin(0.45));
+    g.globalAlpha = 0.95; g.drawImage(G.cloud, -1.15 * G.Rx, -1.15 * G.Rx, 2.3 * G.Rx, 2.3 * G.Rx); g.restore();
+  }
+  g.globalAlpha = 1;
   const proj = (G, r, th) => {
     const x = r * Math.cos(th) * G.Rx, y = r * Math.sin(th) * G.Ry, c = Math.cos(G.rot), s = Math.sin(G.rot);
     return [G.cx + x * c - y * s, G.cy + x * s + y * c];
