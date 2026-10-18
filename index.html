@@ -811,12 +811,13 @@ function renderGalaxy() {
   lb("gxBottom", byNet.slice(-10).reverse().filter(p => p.net < 0));
   gxSize = null; gxLayout(); gxStart();
 }
-// One tilted spiral galaxy. Supernovas form the bright core, the Black holes orbit a dark hole between the arms,
-// and Rising stars, Drifters and Fading players sit in patches along the two arms. Positions live on a unit disk
-// (r 0–1) that turns slowly, inner stars faster, and is tilted onto the canvas.
+// Two tilted galaxies side by side. The winners' galaxy has the Supernovas as its bright core, with Rising stars and
+// Drifters in patches along its arms. The losers' galaxy turns around a black hole: the Black holes ride its accretion
+// disk and the Fading players trail along its arms. Positions live on a unit disk per galaxy (r 0–1) that turns slowly,
+// inner stars faster, and is tilted and rotated onto the canvas.
 const GX_ARMS = 3, GX_WIND = 1.35;
 const gxArm = (arm, r) => arm * 2 * Math.PI / GX_ARMS + r * GX_WIND * Math.PI;
-let gxDust = [], gxDustLinks = [], gxLinks = [], gxLabels = [], gxHole = null, gxSprites = {};
+let gxGals = [], gxDust = [], gxDustLinks = [], gxArcs = [], gxLinks = [], gxLabels = [], gxHole = null, gxSprites = {};
 function gxSprite(glow, color) {
   const c = document.createElement("canvas"); c.width = c.height = 64;
   const g = c.getContext("2d"), grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -827,67 +828,89 @@ function gxLayout() {
   const canvas = document.getElementById("gxCanvas"), stage = document.getElementById("gxStage");
   const W = stage.clientWidth; if (!W) return;
   const phone = W < 640;
-  const Rx = W * (phone ? 0.47 : 0.45), Ry = Rx * (phone ? 0.8 : 0.5);
-  const H = Math.round(2 * Ry + (phone ? 70 : 90));
   const dpr = Math.min(devicePixelRatio || 1, 2);
+  let H;
+  if (phone) {   // stacked
+    const Rx = W * 0.45, Ry = Rx * 0.5;
+    H = Math.round(4 * Ry + 140);
+    gxGals = [{ cx: W / 2, cy: Ry + 50, Rx, Ry, rot: -0.12 }, { cx: W / 2, cy: H - Ry - 45, Rx, Ry, rot: -0.22 }];
+  } else {       // side by side, offset on a diagonal like two merging galaxies
+    const Rx = W * 0.255, Ry = Rx * 0.46;
+    H = Math.round(2 * Ry + Rx * 0.5 + 110);
+    gxGals = [{ cx: W * 0.27, cy: H * 0.42, Rx, Ry, rot: -0.12 }, { cx: W * 0.73, cy: H * 0.58, Rx, Ry, rot: -0.22 }];
+  }
   canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.height = H + "px";
-  gxSize = { W, H, dpr, phone, cx: W / 2, cy: H / 2 + 6, Rx, Ry, scale: phone ? 0.62 : 0.85 };
+  gxSize = { W, H, dpr, phone, scale: phone ? 0.62 : 0.8 };
   let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
   const by = Object.fromEntries(gxClusters.map(c => [c.k, c]));
   gxSprites = Object.fromEntries(gxClusters.map(c => [c.k, gxSprite(c.glow, c.color)]));
   gxStars = []; gxLinks = []; gxLabels = [];
-  const add = (p, cl, r, th, extra) => gxStars.push({ p, cl, r0: r, th, r: Math.min(1.1 + 1.5 * Math.sqrt(p.n), 9) * gxSize.scale, tw: rnd() * 6.28, x: 0, y: 0, ...extra });
-  // Core: Supernovas, biggest winners dead centre.
-  const nova = by.nova.players;
-  nova.forEach((p, j) => add(p, by.nova, 0.115 * Math.sqrt((j + 0.5) / Math.max(nova.length, 1)), j * 2.39996323));
-  if (nova.length) gxLabels.push({ text: `${by.nova.name} · ${nova.length}`, color: by.nova.color, r: 0, th: 0, dy: -(0.13 * Ry + 16) });
-  // Arm patches: each arm is cut into slots that cycle Fading → Drifters → Rising, so neighbouring patches differ.
-  const SLOTS = 4, slots = [];
-  for (let arm = 0; arm < GX_ARMS; arm++) for (let k = 0; k < SLOTS; k++) {
-    const r0 = 0.17 + k * (0.83 / SLOTS), r1 = r0 + 0.83 / SLOTS;
-    slots.push({ arm, r0, r1, k: ["fade", "drift", "rise"][(k + arm) % 3] });
-  }
-  for (const key of ["rise", "drift", "fade"]) {
-    const cl = by[key], mine = slots.filter(s => s.k === key), ps = cl.players;
-    const wsum = mine.reduce((a, s) => a + s.r0 + s.r1, 0);
-    let j = 0;
-    mine.forEach((s, si) => {
-      const quota = si === mine.length - 1 ? ps.length - j : Math.round(ps.length * (s.r0 + s.r1) / wsum);
-      const start = gxStars.length;
-      for (let q = 0; q < quota && j < ps.length; q++, j++) {
-        const r = s.r0 + rnd() * (s.r1 - s.r0), spread = 0.35 + 0.75 * (q / Math.max(quota, 1));
-        add(ps[j], cl, Math.max(0.15, r + gauss() * 0.05), gxArm(s.arm, r) + gauss() * spread);
-      }
-      // Thin network lines: each star links to its two nearest neighbours in the same patch.
-      const group = gxStars.slice(start);
-      group.forEach((a, ia) => {
-        const ax = a.r0 * Math.cos(a.th), ay = a.r0 * Math.sin(a.th);
-        group.map((b, ib) => [ib, (b.r0 * Math.cos(b.th) - ax) ** 2 + (b.r0 * Math.sin(b.th) - ay) ** 2]).filter(d => d[0] !== ia)
-          .sort((x, y) => x[1] - y[1]).slice(0, 2).forEach(([ib]) => gxLinks.push([start + ia, start + ib]));
+  const add = (gi, p, cl, r, th, extra) => gxStars.push({ gi, p, cl, r0: r, th, r: Math.min(1.1 + 1.5 * Math.sqrt(p.n), 9) * gxSize.scale, tw: rnd() * 6.28, x: 0, y: 0, ...extra });
+  // Arm patches: each arm is cut into slots; the slot kinds alternate so neighbouring patches differ.
+  const arms = (gi, kinds, rIn) => {
+    const SLOTS = 4, slots = [];
+    for (let arm = 0; arm < GX_ARMS; arm++) for (let k = 0; k < SLOTS; k++) {
+      const r0 = rIn + k * ((1 - rIn) / SLOTS), r1 = r0 + (1 - rIn) / SLOTS;
+      slots.push({ arm, r0, r1, k: kinds[(k + arm) % kinds.length] });
+    }
+    for (const key of new Set(kinds)) {
+      const cl = by[key], mine = slots.filter(s => s.k === key), ps = cl.players;
+      const wsum = mine.reduce((a, s) => a + s.r0 + s.r1, 0);
+      let j = 0;
+      mine.forEach((s, si) => {
+        const quota = si === mine.length - 1 ? ps.length - j : Math.round(ps.length * (s.r0 + s.r1) / wsum);
+        const start = gxStars.length;
+        for (let q = 0; q < quota && j < ps.length; q++, j++) {
+          const r = s.r0 + rnd() * (s.r1 - s.r0), spread = 0.35 + 0.75 * (q / Math.max(quota, 1));
+          add(gi, ps[j], cl, Math.max(rIn, r + gauss() * 0.05), gxArm(s.arm, r) + gauss() * spread);
+        }
+        // Thin network lines: each star links to its two nearest neighbours in the same patch.
+        const group = gxStars.slice(start);
+        group.forEach((a, ia) => {
+          const ax = a.r0 * Math.cos(a.th), ay = a.r0 * Math.sin(a.th);
+          group.map((b, ib) => [ib, (b.r0 * Math.cos(b.th) - ax) ** 2 + (b.r0 * Math.sin(b.th) - ay) ** 2]).filter(d => d[0] !== ia)
+            .sort((x, y) => x[1] - y[1]).slice(0, 2).forEach(([ib]) => gxLinks.push([start + ia, start + ib]));
+        });
+        s.n = quota;
       });
-      s.n = quota;
-    });
-    const big = mine.slice().sort((a, b) => (b.n || 0) - (a.n || 0))[0];
-    if (big && ps.length) gxLabels.push({ text: `${cl.name} · ${ps.length}`, color: cl.color, r: (big.r0 + big.r1) / 2, th: gxArm(big.arm, (big.r0 + big.r1) / 2) });
-  }
-  // Black hole: sits in the gap between the arms, its players circling the event horizon.
+      const big = mine.slice().sort((a, b) => (b.n || 0) - (a.n || 0))[0];
+      if (big && ps.length) gxLabels.push({ gi, text: `${cl.name} · ${ps.length}`, color: cl.color, r: (big.r0 + big.r1) / 2, th: gxArm(big.arm, (big.r0 + big.r1) / 2) });
+    }
+  };
+  // Winners' galaxy: Supernovas in the core, biggest winners dead centre.
+  const nova = by.nova.players;
+  nova.forEach((p, j) => add(0, p, by.nova, 0.14 * Math.sqrt((j + 0.5) / Math.max(nova.length, 1)), j * 2.39996323));
+  if (nova.length) gxLabels.push({ gi: 0, text: `${by.nova.name} · ${nova.length}`, color: by.nova.color, r: 0, th: 0, dy: -(0.16 * gxGals[0].Ry + 18) });
+  arms(0, ["drift", "rise"], 0.2);
+  // Losers' galaxy: a black hole at the centre with the Black holes on its accretion disk, Fading players on the arms.
+  gxHole = { gi: 1, size: phone ? 0.1 : 0.095 };
   const hole = by.hole.players;
-  gxHole = hole.length ? { r: 0.62, th: gxArm(0, 0.62) + Math.PI / GX_ARMS, size: phone ? 0.07 : 0.055 } : null;
-  hole.forEach((p, j) => add(p, by.hole, 0, 0, { hole: true, dr: gxHole.size * (1.4 + 1.3 * Math.sqrt((j + 0.5) / hole.length)), dth: j * 2.39996323 }));
-  if (gxHole) gxLabels.push({ text: `${by.hole.name} · ${hole.length}`, color: by.hole.color, hole: true });
-  // Dust: unlabelled specks that trace the arms and fill the disk.
-  gxDust = [];
-  for (let i = 0; i < (phone ? 2600 : 5200); i++) {
-    const onArm = rnd() < 0.65, r = onArm ? 0.05 + 1.0 * Math.pow(rnd(), 0.85) : 0.03 + 1.05 * rnd();
-    gxDust.push({ r, th: onArm ? gxArm(i % GX_ARMS, r) + gauss() * 0.9 : rnd() * 6.283, a: 0.3 + rnd() * 0.6, s: rnd() < 0.8 ? 1.1 : 1.9 });
-  }
-  // Faint web between neighbouring dust specks, like the reference image.
+  hole.forEach((p, j) => add(1, p, by.hole, 0, 0, { hole: true, dr: gxHole.size * (1.45 + 1.4 * Math.sqrt((j + 0.5) / hole.length)), dth: j * 2.39996323 }));
+  if (hole.length) gxLabels.push({ gi: 1, text: `${by.hole.name} · ${hole.length}`, color: by.hole.color, hole: true });
+  arms(1, ["fade"], 0.38);
+  // Dust: unlabelled specks that trace the arms and fill each disk, plus warm swirl streaks like an accretion disk.
+  gxDust = []; gxArcs = [];
+  gxGals.forEach((G, gi) => {
+    const rIn = gi ? 0.3 : 0.02;
+    for (let i = 0; i < (phone ? 1400 : 2600); i++) {
+      const onArm = rnd() < 0.6, r = rIn + (1.05 - rIn) * (onArm ? Math.pow(rnd(), 0.85) : rnd());
+      gxDust.push({ gi, r, th: onArm ? gxArm(i % GX_ARMS, r) + gauss() * 0.9 : rnd() * 6.283, a: 0.3 + rnd() * 0.6, s: rnd() < 0.8 ? 1.1 : 1.9 });
+    }
+    for (let i = 0; i < (phone ? 110 : 200); i++) {
+      const r = rIn + 0.04 + (1 - rIn) * Math.pow(rnd(), 1.25);
+      gxArcs.push({ gi, r, phi: rnd() * 6.283, len: 0.3 + rnd() * 0.9, wide: rnd() < 0.35, c: r < 0.4 ? 0 : r < 0.7 ? 1 : 2 });
+    }
+  });
+  // Faint web between neighbouring dust specks in the same galaxy.
   gxDustLinks = [];
   for (let i = 0; i < gxDust.length; i += 2) {
     const a = gxDust[i], ax = a.r * Math.cos(a.th), ay = a.r * Math.sin(a.th);
     let best = -1, bd = 0.004;
-    for (let j = i + 1; j < Math.min(gxDust.length, i + 400); j++) { const b = gxDust[j], d = (b.r * Math.cos(b.th) - ax) ** 2 + (b.r * Math.sin(b.th) - ay) ** 2; if (d < bd && d > 0.0004) { bd = d; best = j; } }
+    for (let j = i + 1; j < Math.min(gxDust.length, i + 400); j++) {
+      const b = gxDust[j]; if (b.gi !== a.gi) break;
+      const d = (b.r * Math.cos(b.th) - ax) ** 2 + (b.r * Math.sin(b.th) - ay) ** 2; if (d < bd && d > 0.0004) { bd = d; best = j; }
+    }
     if (best >= 0) gxDustLinks.push([i, best]);
   }
   gxBg = gxBackdrop(W, H, dpr);
@@ -895,52 +918,72 @@ function gxLayout() {
 function gxBackdrop(W, H, dpr) {
   const off = document.createElement("canvas"); off.width = W * dpr; off.height = H * dpr;
   const g = off.getContext("2d"); g.scale(dpr, dpr);
-  const { cx, cy, Rx, Ry } = gxSize;
   let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  for (let i = 0; i < W * H / 700; i++) { g.fillStyle = `rgba(190,210,255,${0.06 + rnd() * 0.25})`; g.fillRect(rnd() * W, rnd() * H, 1, 1); }
-  // Disk haze and the bright core.
-  g.save(); g.translate(cx, cy); g.scale(1, Ry / Rx);
-  const disk = g.createRadialGradient(0, 0, 0, 0, 0, Rx * 1.05);
-  disk.addColorStop(0, "rgba(130,170,255,.4)"); disk.addColorStop(0.35, "rgba(80,120,230,.2)"); disk.addColorStop(0.7, "rgba(60,95,200,.08)"); disk.addColorStop(1, "rgba(40,70,160,0)");
-  // A light, warm yellow wash over the whole disk.
-  const warm = g.createRadialGradient(0, 0, 0, 0, 0, Rx * 1.1);
-  warm.addColorStop(0, "rgba(255,226,150,.3)"); warm.addColorStop(0.45, "rgba(255,210,130,.14)"); warm.addColorStop(1, "rgba(255,200,120,0)");
-  g.fillStyle = disk; g.beginPath(); g.arc(0, 0, Rx * 1.05, 0, 6.29); g.fill();
-  g.globalCompositeOperation = "lighter"; g.fillStyle = warm; g.beginPath(); g.arc(0, 0, Rx * 1.1, 0, 6.29); g.fill(); g.globalCompositeOperation = "source-over";
-  const core = g.createRadialGradient(0, 0, 0, 0, 0, Rx * 0.26);
-  core.addColorStop(0, "rgba(255,255,255,.75)"); core.addColorStop(0.16, "rgba(210,255,230,.42)"); core.addColorStop(0.5, "rgba(100,210,160,.25)"); core.addColorStop(1, "rgba(60,120,200,0)");
-  g.fillStyle = core; g.beginPath(); g.arc(0, 0, Rx * 0.26, 0, 6.29); g.fill();
-  g.restore();
+  for (let i = 0; i < W * H / 700; i++) { g.fillStyle = `rgba(210,200,255,${0.06 + rnd() * 0.25})`; g.fillRect(rnd() * W, rnd() * H, 1, 1); }
+  // Each disk glows white-hot in the middle, then gold, orange and a magenta rim.
+  g.globalCompositeOperation = "lighter";
+  gxGals.forEach((G, gi) => {
+    g.save(); g.translate(G.cx, G.cy); g.rotate(G.rot); g.scale(1, G.Ry / G.Rx);
+    const R = G.Rx * 1.12, disk = g.createRadialGradient(0, 0, 0, 0, 0, R);
+    if (gi === 0) { disk.addColorStop(0, "rgba(255,252,235,.9)"); disk.addColorStop(0.12, "rgba(255,226,150,.55)"); }
+    else { disk.addColorStop(0, "rgba(255,150,70,.35)"); disk.addColorStop(0.18, "rgba(255,170,90,.4)"); }
+    disk.addColorStop(0.4, "rgba(255,140,60,.22)"); disk.addColorStop(0.72, "rgba(205,60,160,.14)"); disk.addColorStop(1, "rgba(120,40,160,0)");
+    g.fillStyle = disk; g.beginPath(); g.arc(0, 0, R, 0, 6.29); g.fill();
+    g.restore();
+  });
+  g.globalCompositeOperation = "source-over";
   return off;
 }
+const GX_DUST = [{ dot: "#ffe6bd", web: "#ffd08a" }, { dot: "#ffc0a0", web: "#ff8fc0" }];
 function gxDraw(t) {
   const canvas = document.getElementById("gxCanvas"); if (!gxSize) return;
-  const { W, H, dpr, cx, cy, Rx, Ry } = gxSize, g = canvas.getContext("2d");
+  const { W, H, dpr } = gxSize, g = canvas.getContext("2d");
   g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
   if (gxBg) g.drawImage(gxBg, 0, 0, W, H);
   const spin = r => t * 0.000032 / (0.22 + r);   // inner stars orbit faster
-  const proj = (r, th) => [cx + r * Math.cos(th) * Rx, cy + r * Math.sin(th) * Ry];
-  g.fillStyle = "#c8dcff";
-  for (const d of gxDust) { [d.x, d.y] = proj(d.r, d.th + spin(d.r)); g.globalAlpha = d.a; g.fillRect(d.x, d.y, d.s, d.s); }
-  g.globalAlpha = 0.34; g.strokeStyle = "#a9c8ff"; g.lineWidth = 0.6; g.beginPath();
-  for (const [a, b] of gxDustLinks) { g.moveTo(gxDust[a].x, gxDust[a].y); g.lineTo(gxDust[b].x, gxDust[b].y); }
-  g.stroke();
-  let hx = 0, hy = 0;
-  if (gxHole) [hx, hy] = proj(gxHole.r, gxHole.th + spin(gxHole.r));
+  const proj = (G, r, th) => {
+    const x = r * Math.cos(th) * G.Rx, y = r * Math.sin(th) * G.Ry, c = Math.cos(G.rot), s = Math.sin(G.rot);
+    return [G.cx + x * c - y * s, G.cy + x * s + y * c];
+  };
+  // Swirl streaks: arcs of each disk, white-gold near the centre, orange, then magenta at the rim.
+  g.globalCompositeOperation = "lighter";
+  // Batched into a few paths by colour and width so the streaks stay cheap to draw.
+  const ARC_COL = ["rgba(255,236,190,.32)", "rgba(255,170,80,.28)", "rgba(230,80,170,.26)"];
+  for (let c = 0; c < 3; c++) for (const wide of [false, true]) {
+    g.strokeStyle = ARC_COL[c]; g.lineWidth = wide ? 1.9 : 0.8; g.beginPath();
+    for (const p of gxArcs) {
+      if (p.c !== c || p.wide !== wide) continue;
+      const G = gxGals[p.gi], a0 = p.phi + spin(p.r), [sx, sy] = proj(G, p.r, a0);
+      g.moveTo(sx, sy); g.ellipse(G.cx, G.cy, p.r * G.Rx, p.r * G.Ry, G.rot, a0, a0 + p.len);
+    }
+    g.stroke();
+  }
+  g.globalCompositeOperation = "source-over";
+  for (const [gi, col] of GX_DUST.entries()) {
+    g.fillStyle = col.dot;
+    for (const d of gxDust) { if (d.gi !== gi) continue; [d.x, d.y] = proj(gxGals[gi], d.r, d.th + spin(d.r)); g.globalAlpha = d.a; g.fillRect(d.x, d.y, d.s, d.s); }
+  }
+  g.globalAlpha = 0.3; g.lineWidth = 0.6;
+  for (const [gi, col] of GX_DUST.entries()) {
+    g.strokeStyle = col.web; g.beginPath();
+    for (const [a, b] of gxDustLinks) { if (gxDust[a].gi !== gi) continue; g.moveTo(gxDust[a].x, gxDust[a].y); g.lineTo(gxDust[b].x, gxDust[b].y); }
+    g.stroke();
+  }
+  const HG = gxGals[gxHole.gi], hx = HG.cx, hy = HG.cy, hr = gxHole.size * HG.Rx, tilt = HG.Ry / HG.Rx;
   const q = gxQuery, reduced = gxReduced();
   for (const s of gxStars) {
     if (s.hole) {   // these ride the tilted accretion disk
-      const a = s.dth + t * 0.00025, ex = Math.cos(a) * s.dr * Rx, ey = Math.sin(a) * s.dr * Rx * 0.32;
-      s.behind = Math.sin(a) < 0 && ex * ex + ey * ey < (gxHole.size * Rx * 1.05) ** 2;   // hidden behind the sphere
-      s.x = hx + ex * Math.cos(-0.22) - ey * Math.sin(-0.22); s.y = hy + ex * Math.sin(-0.22) + ey * Math.cos(-0.22);
+      const a = s.dth + t * 0.00025, ex = Math.cos(a) * s.dr * HG.Rx, ey = Math.sin(a) * s.dr * HG.Rx * tilt;
+      s.behind = Math.sin(a) < 0 && ex * ex + ey * ey < (hr * 1.05) ** 2;   // hidden behind the sphere
+      s.x = hx + ex * Math.cos(HG.rot) - ey * Math.sin(HG.rot); s.y = hy + ex * Math.sin(HG.rot) + ey * Math.cos(HG.rot);
     }
-    else [s.x, s.y] = proj(s.r0, s.th + spin(s.r0));
+    else [s.x, s.y] = proj(gxGals[s.gi], s.r0, s.th + spin(s.r0));
   }
   // Network lines between neighbours.
   g.globalAlpha = q ? 0.05 : 0.22; g.lineWidth = 0.6;
   for (const [a, b] of gxLinks) { const A = gxStars[a], B = gxStars[b]; g.strokeStyle = A.cl.color; g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.stroke(); }
   // Black hole: a tilted accretion disk wraps a dark sphere. The far half of the disk goes behind the sphere, the near half in front.
-  if (gxHole) gxDrawHole(g, hx, hy, gxHole.size * Rx, t);
+  gxDrawHole(g, hx, hy, hr, t, tilt, HG.rot);
   g.globalCompositeOperation = "lighter";   // overlapping glows add up, like real starlight
   for (const s of gxStars) {
     if (s.behind) continue;
@@ -953,8 +996,7 @@ function gxDraw(t) {
   if (gxHover) { g.strokeStyle = "#fff"; g.lineWidth = 1.2; g.beginPath(); g.arc(gxHover.x, gxHover.y, gxHover.r * 2 + 3, 0, 6.29); g.stroke(); }
   // Cluster labels ride along with their patch.
   g.textAlign = "center"; g.font = "800 11px Archivo, system-ui, sans-serif";
-  const boxes = [];
-  if (gxHole) { const hr = gxHole.size * Rx * 1.1; boxes.push([hx - hr, hy - hr, 2 * hr, 2 * hr]); }   // keep names off the sphere
+  const boxes = [[hx - hr * 1.1, hy - hr * 1.1, 2.2 * hr, 2.2 * hr]];   // keep names off the sphere
   const pill = (text, x, y, color, font) => {
     g.font = font; const w = g.measureText(text).width + 12;
     x = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x)); y = Math.max(12, Math.min(H - 8, y));
@@ -965,13 +1007,13 @@ function gxDraw(t) {
   if (!q) {
     for (const L of gxLabels) {
       let x, y;
-      if (L.hole) { x = hx; y = hy - gxHole.size * Rx * 1.35 - 16; }
-      else { [x, y] = proj(L.r, L.th + spin(L.r)); y += L.dy || -18; }
+      if (L.hole) { x = hx; y = hy - hr * 1.5 - 16; }
+      else { [x, y] = proj(gxGals[L.gi], L.r, L.th + spin(L.r)); y += L.dy || -18; }
       pill(L.text.toUpperCase(), x, y, L.color, "800 11px Archivo, system-ui, sans-serif");
     }
     // Name the top Supernovas and Black holes.
     g.textAlign = "left";
-    for (const k of ["nova", "hole"]) gxStars.filter(s => s.cl.k === k).slice(0, 3).forEach(s => {
+    for (const k of ["nova", "hole"]) gxStars.filter(s => s.cl.k === k && !s.behind).slice(0, 3).forEach(s => {
       g.font = "600 11px Archivo, system-ui, sans-serif"; const w = g.measureText(s.p.name).width + 8;
       let x = s.x + s.r + 5; if (x + w > W - 4) x = s.x - s.r - 5 - w;
       const box = [x, s.y - 8, w, 15];
@@ -982,12 +1024,12 @@ function gxDraw(t) {
   if (gxHover) gxShowTip(gxHover);
 }
 let gxSwirl = [];
-function gxDrawHole(g, hx, hy, hr, t) {
+function gxDrawHole(g, hx, hy, hr, t, tilt, rot) {
   if (!gxSwirl.length) {
     let sd = 3; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
     for (let i = 0; i < 260; i++) gxSwirl.push({ rho: 1.15 + 1.75 * Math.pow(rnd(), 1.6), phi: rnd() * 6.283, len: 0.25 + rnd() * 0.7, w: 0.6 + rnd() * 2.2, a: 0.35 + rnd() * 0.6 });
   }
-  const tilt = 0.32, rot = -0.22, spin = gxReduced() ? 0 : t;
+  const spin = gxReduced() ? 0 : t;
   g.globalAlpha = 1; g.save(); g.translate(hx, hy); g.rotate(rot);
   // Hot glow around the hole.
   g.globalCompositeOperation = "lighter";
