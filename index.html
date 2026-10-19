@@ -1309,8 +1309,35 @@ function gxDraw(t) {
       if (boxes.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + box[3] && box[1] < b[1] + b[3])) return;
       boxes.push(box); g.fillStyle = "rgba(11,10,20,.8)"; g.fillRect(...box); g.fillStyle = s.cl.color; g.fillText(s.p.name, x + 4, s.y + 3);
     });
+    if (!reduced && t) gxDrawPops(g, t, W, boxes);
   }
   if (gxHover) gxShowTip(gxHover);
+}
+// Random star names drift into view and fade out again; between 4 and 7 are up at any time.
+let gxPops = [], gxPopCap = 5, gxNextPop = 0, gxNextCap = 0;
+function gxDrawPops(g, t, W, boxes) {
+  gxPops = gxPops.filter(p => t - p.t0 < p.life && !p.s.behind);
+  if (t > gxNextCap) { gxPopCap = 4 + Math.floor(Math.random() * 4); gxNextCap = t + 2500 + Math.random() * 3000; }
+  if ((t > gxNextPop || gxPops.length < 4) && gxPops.length < gxPopCap && gxStars.length) {
+    gxNextPop = t + 200 + Math.random() * 450;
+    for (let tries = 0; tries < 12; tries++) {
+      const s = gxStars[Math.floor(Math.random() * gxStars.length)];
+      if (s.behind || gxPops.some(p => p.s === s)) continue;
+      gxPops.push({ s, t0: t, life: 2600 + Math.random() * 2200 }); break;
+    }
+  }
+  g.textAlign = "left"; g.letterSpacing = "0px"; g.font = GX_NAME_FONT;
+  for (const p of gxPops) {
+    const s = p.s, age = t - p.t0, a = Math.min(1, age / 450, (p.life - age) / 700);
+    const w = g.measureText(s.p.name).width + 8;
+    let x = s.x + s.r + 5; if (x + w > W - 4) x = s.x - s.r - 5 - w;
+    const box = [x, s.y - 8, w, 15];
+    if (boxes.some(b => b[0] < box[0] + box[2] && box[0] < b[0] + b[2] && b[1] < box[1] + box[3] && box[1] < b[1] + b[3])) { p.life = 0; continue; }   // crowded: let another star take its turn
+    boxes.push(box); g.globalAlpha = a;
+    g.fillStyle = "rgba(11,10,20,.75)"; g.fillRect(...box); g.fillStyle = s.cl.color; g.fillText(s.p.name, x + 4, s.y + 3);
+    g.strokeStyle = s.cl.color; g.lineWidth = 1; g.globalAlpha = a * 0.7; g.beginPath(); g.arc(s.x, s.y, s.r * 2 + 3, 0, 6.29); g.stroke();
+  }
+  g.globalAlpha = 1;
 }
 // The black hole: a dark pit sunk into the disk, its far inner wall faintly lit, ringed by white-hot billowing gas
 // that swirls around the rim and fades into the gold and orange clouds.
