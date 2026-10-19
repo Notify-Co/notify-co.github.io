@@ -555,7 +555,7 @@ function rowsFromCSV(text, capper, src = {}) {
   const ix = (...names) => { for (const n of names) { const i = h.indexOf(n); if (i >= 0) return i; } return -1; };
   const iD = ix("date"), iP = ix("play"), iO = ix("odds", "odds (american)"), iR = ix("units risked", "stake (units)", "stake"), iRes = ix("result"),
     iN = ix("units won/lost", "profit / loss (units)"), iPl = ix("platform", "bet type"), iS = ix("sport", "league"),
-    iPlayer = ix("player"), iMkt = ix("prop market"), iSide = ix("side"), iLine = ix("line");
+    iPlayer = ix("player"), iMkt = ix("prop market"), iSide = ix("side"), iLine = ix("line"), iLean = ix("leans / exclusives");
   // Props-tracker layout: no Play column, so build it from Player / Side / Line / Prop Market ("VJ Edgecombe O 10.5 Points").
   const play = r => {
     if (iP >= 0) return (r[iP] || "").trim();
@@ -564,7 +564,9 @@ function rowsFromCSV(text, capper, src = {}) {
   };
   // Results may be spelled out (Win / Loss / Push); Pending and Void picks are left out of the stats.
   const res = r => { const v = (r[iRes] || "").trim().toUpperCase(); return v === "PENDING" || v === "VOID" || !v ? "" : v[0]; };
-  return t.slice(hi + 1).filter(r => r[iD] && r[iD].includes("/") && (iP >= 0 || res(r))).map(r => {
+  // Leans are left out of the record (caleb's call); exclusives still count.
+  const lean = r => iLean >= 0 && /lean/i.test(r[iLean] || "");
+  return t.slice(hi + 1).filter(r => r[iD] && r[iD].includes("/") && (iP >= 0 || res(r)) && !lean(r)).map(r => {
     const [m, d, y] = r[iD].trim().split("/");
     return { date: `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`, play: play(r), odds: (r[iO] || "").trim().replace(/^\+/, ""),
       risk: num(r[iR]), res: iP >= 0 ? (r[iRes] || "").trim().toUpperCase() : res(r), net: num(r[iN]),
