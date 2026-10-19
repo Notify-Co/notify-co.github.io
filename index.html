@@ -258,7 +258,7 @@ td.num { font-family: var(--f-mono); font-size: .84rem; color: var(--ink-2); }
 .log-tools input:focus, .log-tools select:focus { box-shadow: 0 0 0 4px oklch(90.9% 0.189 99.9 / .2), 0 0 34px oklch(60% 0.18 265 / .4); outline: none; }
 .res { display: inline-flex; align-items: center; padding: 4px 9px; border-radius: 999px; font: 500 11px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; --c: var(--ink-2);
   color: var(--c); background: color-mix(in oklch, var(--c) 14%, transparent); border: 1px solid color-mix(in oklch, var(--c) 40%, transparent); }
-.res.W { --c: var(--win); } .res.L { --c: var(--loss); } .res.P { --c: var(--ink-2); }
+.res.W { --c: var(--win); } .res.L { --c: var(--loss); } .res.P { --c: var(--ink-2); } .res.PENDING { --c: #AFD7FA; }
 .more { justify-self: center; display: inline-flex; align-items: center; min-height: 46px; padding: 0 24px; border-radius: 999px; border: 0; cursor: pointer;
   font: 700 15px/1 var(--f-body); color: var(--mist); background: transparent; box-shadow: inset 0 0 0 2px oklch(90% 0.08 206 / .45); transition: color .2s ease, box-shadow .2s ease; }
 .more:hover { color: var(--sun); box-shadow: inset 0 0 0 2px var(--sun); }
@@ -495,7 +495,7 @@ footer > p { padding-top: 22px; border-top: 1px solid rgba(196, 181, 253, .1); w
     <div class="sec-head"><h2>Every pick</h2><span class="small" id="logCount"></span></div>
     <div class="log-tools">
       <input id="q" type="search" aria-label="Search picks" placeholder="Search a team or player">
-      <select id="fRes" aria-label="Result"><option value="">All results</option><option value="W">Wins</option><option value="L">Losses</option></select>
+      <select id="fRes" aria-label="Result"><option value="">All results</option><option value="W">Wins</option><option value="L">Losses</option><option value="PENDING">Pending</option></select>
       <select id="fPlat" aria-label="Bet type"></select>
     </div>
     <div class="tbl-wrap"><table id="logTable"></table></div>
@@ -562,8 +562,8 @@ function rowsFromCSV(text, capper, src = {}) {
     const g = i => i >= 0 ? (r[i] || "").trim() : "", side = g(iSide), ou = { over: "O", under: "U" }[side.toLowerCase()];
     return (ou ? [g(iPlayer), ou, g(iLine), g(iMkt)] : [g(iPlayer), g(iMkt), side, g(iLine)]).filter(Boolean).join(" ");
   };
-  // Results may be spelled out (Win / Loss / Push); Pending and Void picks are left out of the stats.
-  const res = r => { const v = (r[iRes] || "").trim().toUpperCase(); return v === "PENDING" || v === "VOID" || !v ? "" : v[0]; };
+  // Results may be spelled out (Win / Loss / Push). Void picks are dropped; Pending ones are kept for the pick log only.
+  const res = r => { const v = (r[iRes] || "").trim().toUpperCase(); return v === "PENDING" ? v : v === "VOID" || !v ? "" : v[0]; };
   // Leans are left out of the record (caleb's call); exclusives still count.
   const lean = r => iLean >= 0 && /lean/i.test(r[iLean] || "");
   return t.slice(hi + 1).filter(r => r[iD] && r[iD].includes("/") && (iP >= 0 || res(r)) && !lean(r)).map(r => {
@@ -612,7 +612,7 @@ function niceTicks(min, max, count) {
 }
 
 /* ---------- State ---------- */
-let galaxy = false, ALL = [], sport = "All", capper = "All", shown = 25, period = "all", cumSel = null;
+let galaxy = false, ALL = [], PENDING = [], sport = "All", capper = "All", shown = 25, period = "all", cumSel = null;
 const TEAM = "All";
 const TAB_COLORS = { team: "#D68FBC", caleb: "#39ff88", sammy: "#ff3b5c", quentin: "#ffd60a", footy: "#d65bff" };
 const slug = c => c.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -813,15 +813,17 @@ function renderMonths(rows) {
 }
 
 function renderLog(rows) {
+  // Pending props aren't in the stats, but they head the pick log for the current capper and sport.
+  rows = rows.concat(PENDING.filter(r => (capper === TEAM || r.capper === capper) && (sport === "All" || r.sport === sport)));
   const q = document.getElementById("q").value.trim().toLowerCase();
   const fr = document.getElementById("fRes").value, fp = document.getElementById("fPlat").value;
   const list = rows.filter(r => (!q || r.play.toLowerCase().includes(q)) && (!fr || r.res === fr) && (!fp || r.plat === fp))
     .sort((a, b) => b.date.localeCompare(a.date));
   const showSport = new Set(byCapper().map(r => r.sport)).size > 1, showCap = capper === TEAM && new Set(ALL.map(r => r.capper)).size > 1;
-  document.getElementById("logCount").textContent = `${list.length} pick${list.length === 1 ? "" : "s"} · newest first`;
-  const resLbl = r => r === "W" ? "WIN" : r === "L" ? "LOSS" : (r || "—");
+  document.getElementById("logCount").textContent = `${list.length} pick${list.length === 1 ? "" : "s"}${(n => n ? ` · ${n} pending` : "")(list.filter(r => r.res === "PENDING").length)} · newest first`;
+  const resLbl = r => r === "W" ? "WIN" : r === "L" ? "LOSS" : r === "PENDING" ? "PENDING" : (r || "—");
   document.getElementById("logTable").innerHTML = `<thead><tr><th>Date</th>${showCap ? "<th>Capper</th>" : ""}${showSport ? "<th>Sport</th>" : ""}<th>Pick</th><th class="n">Odds</th><th class="n">Risk</th><th>Result</th><th class="n">Units</th><th>Bet type</th></tr></thead><tbody>${
-    list.slice(0, shown).map(r => `<tr><td class="num">${fmtDate(r.date)}</td>${showCap ? `<td>${esc(r.capper)}</td>` : ""}${showSport ? `<td>${esc(SPORT_NAMES[r.sport] || r.sport)}</td>` : ""}<td class="play">${esc(r.play)}</td><td class="n">${r.odds === "" ? "—" : (+r.odds > 0 ? "+" : "") + esc(r.odds)}</td><td class="n">${r.risk ? r.risk + "u" : "—"}</td><td><span class="res ${r.res === "W" || r.res === "L" ? r.res : "P"}">${resLbl(r.res)}</span></td><td class="n ${cls(r.net)}">${fmtU(r.net)}</td><td>${r.plat ? esc(PLAT_NAMES[r.plat] || r.plat) : "—"}</td></tr>`).join("")
+    list.slice(0, shown).map(r => `<tr><td class="num">${fmtDate(r.date)}</td>${showCap ? `<td>${esc(r.capper)}</td>` : ""}${showSport ? `<td>${esc(SPORT_NAMES[r.sport] || r.sport)}</td>` : ""}<td class="play">${esc(r.play)}</td><td class="n">${r.odds === "" ? "—" : (+r.odds > 0 ? "+" : "") + esc(r.odds)}</td><td class="n">${r.risk ? r.risk + "u" : "—"}</td><td><span class="res ${r.res === "W" || r.res === "L" || r.res === "PENDING" ? r.res : "P"}">${resLbl(r.res)}</span></td><td class="n ${cls(r.net)}">${r.res === "PENDING" ? "—" : fmtU(r.net)}</td><td>${r.plat ? esc(PLAT_NAMES[r.plat] || r.plat) : "—"}</td></tr>`).join("")
     || `<tr><td colspan="9" class="muted">No picks match that search.</td></tr>`}</tbody>`;
   const more = document.getElementById("more"); more.hidden = list.length <= shown;
   more.textContent = `Show more (${list.length - shown} left)`;
@@ -1474,7 +1476,7 @@ function setSource(live) {
 
 capper = capperFromHash();
 ALL = fromSnapshot(); setupLog(); setupRange(); setupGalaxy(); renderAll(); setSource(false);
-loadLive().then(rows => { ALL = rows; setupLog(); renderAll(); setSource(true); }).catch(() => {});
+loadLive().then(rows => { ALL = rows.filter(r => r.res !== "PENDING"); PENDING = rows.filter(r => r.res === "PENDING"); setupLog(); renderAll(); setSource(true); }).catch(() => {});
 </script>
 
 </body>
