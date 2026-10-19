@@ -521,6 +521,8 @@ footer > p { padding-top: 22px; border-top: 1px solid rgba(196, 181, 253, .1); w
 const SOURCES = [
   { capper: "Caleb",   url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTxoBnAem4jM3xaZH7ySrrFt0s8lBLgG8vXwVksc4bxJTjba4KEX9J7znbcrYw5vlWYp5jRg6pLHOt/pub?gid=726932021&single=true&output=csv" },
   { capper: "Sammy",   url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTxoBnAem4jM3xaZH7ySrrFt0s8lBLgG8vXwVksc4bxJTjba4KEX9J7znbcrYw5vlWYp5jRg6pLHOt/pub?gid=782186226&single=true&output=csv" },
+  // Sammy's own props tracker, from 10/19/2026 on. It has no sport or bet-type column, so those are set here.
+  { capper: "Sammy",   url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDy9CuCBwBjnOQSQs6hqXS6ErhMGcLs_ouRtQhnvNLPZLLC9brHEk_AgduqXsZTsfRYi1Bk_kseomY/pub?gid=0&single=true&output=csv", sport: "NBA", plat: "BOOK" },
   { capper: "Quentin", url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTxoBnAem4jM3xaZH7ySrrFt0s8lBLgG8vXwVksc4bxJTjba4KEX9J7znbcrYw5vlWYp5jRg6pLHOt/pub?gid=2016863048&single=true&output=csv" },
   { capper: "Footy",   url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTxoBnAem4jM3xaZH7ySrrFt0s8lBLgG8vXwVksc4bxJTjba4KEX9J7znbcrYw5vlWYp5jRg6pLHOt/pub?gid=2126143555&single=true&output=csv" }
 ];
@@ -546,15 +548,28 @@ function parseCSV(text) {
   return out;
 }
 const num = s => { const v = parseFloat(String(s).replace(/[^0-9.+-]/g, "")); return isFinite(v) ? v : 0; };
-function rowsFromCSV(text, capper) {
-  const t = parseCSV(text); const h = t[0].map(x => x.trim().toLowerCase());
-  const ix = name => h.indexOf(name);
-  const iD = ix("date"), iP = ix("play"), iO = ix("odds"), iR = ix("units risked"), iRes = ix("result"), iN = ix("units won/lost"), iPl = ix("platform") >= 0 ? ix("platform") : ix("bet type"), iS = ix("sport");
-  return t.slice(1).filter(r => r[iD] && r[iD].includes("/")).map(r => {
-    const [m, d, y] = r[iD].split("/");
-    return { date: `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`, play: (r[iP] || "").trim(), odds: (r[iO] || "").trim(),
-      risk: num(r[iR]), res: (r[iRes] || "").trim().toUpperCase(), net: num(r[iN]), plat: (p => PLAT_ALIAS[p.toUpperCase()] || p)((r[iPl] || "").trim()),
-      sport: iS >= 0 && r[iS] ? r[iS].trim() : "Other", capper };
+function rowsFromCSV(text, capper, src = {}) {
+  // Some sheets have a title and notes above the header row, so start at the first row with a "Date" column.
+  const t = parseCSV(text); const hi = Math.max(0, t.findIndex(r => r.some(x => x.trim().toLowerCase() === "date")));
+  const h = t[hi].map(x => x.trim().toLowerCase());
+  const ix = (...names) => { for (const n of names) { const i = h.indexOf(n); if (i >= 0) return i; } return -1; };
+  const iD = ix("date"), iP = ix("play"), iO = ix("odds", "odds (american)"), iR = ix("units risked", "stake (units)", "stake"), iRes = ix("result"),
+    iN = ix("units won/lost", "profit / loss (units)"), iPl = ix("platform", "bet type"), iS = ix("sport", "league"),
+    iPlayer = ix("player"), iMkt = ix("prop market"), iSide = ix("side"), iLine = ix("line");
+  // Props-tracker layout: no Play column, so build it from Player / Side / Line / Prop Market ("VJ Edgecombe O 10.5 Points").
+  const play = r => {
+    if (iP >= 0) return (r[iP] || "").trim();
+    const g = i => i >= 0 ? (r[i] || "").trim() : "", side = g(iSide), ou = { over: "O", under: "U" }[side.toLowerCase()];
+    return (ou ? [g(iPlayer), ou, g(iLine), g(iMkt)] : [g(iPlayer), g(iMkt), side, g(iLine)]).filter(Boolean).join(" ");
+  };
+  // Results may be spelled out (Win / Loss / Push); Pending and Void picks are left out of the stats.
+  const res = r => { const v = (r[iRes] || "").trim().toUpperCase(); return v === "PENDING" || v === "VOID" || !v ? "" : v[0]; };
+  return t.slice(hi + 1).filter(r => r[iD] && r[iD].includes("/") && (iP >= 0 || res(r))).map(r => {
+    const [m, d, y] = r[iD].trim().split("/");
+    return { date: `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`, play: play(r), odds: (r[iO] || "").trim().replace(/^\+/, ""),
+      risk: num(r[iR]), res: iP >= 0 ? (r[iRes] || "").trim().toUpperCase() : res(r), net: num(r[iN]),
+      plat: iPl >= 0 ? (p => PLAT_ALIAS[p.toUpperCase()] || p)((r[iPl] || "").trim()) : (src.plat || ""),
+      sport: iS >= 0 && r[iS] ? r[iS].trim() : (src.sport || "Other"), capper };
   });
 }
 function fromSnapshot() {
@@ -566,7 +581,7 @@ async function loadLive() {
   const results = await Promise.allSettled(SOURCES.map(async s => {
     const r = await fetch(s.url, { cache: "no-store" });
     if (!r.ok) throw new Error(r.status);
-    return rowsFromCSV(await r.text(), s.capper);
+    return rowsFromCSV(await r.text(), s.capper, s);
   }));
   const all = results.flatMap(x => x.status === "fulfilled" ? x.value : []);
   if (!all.length) throw new Error("empty");
