@@ -427,8 +427,9 @@ footer > p { padding-top: 22px; border-top: 1px solid rgba(196, 181, 253, .1); w
 <nav class="tabs" aria-label="Team and cappers">
   <div class="tabs-inner" id="tabs" role="tablist"></div>
 </nav>
+<div id="ct" hidden></div>
 <div class="wrap">
-  <header>
+  <header id="hero">
     <div class="sport-float" id="sportFloat" aria-hidden="true"></div>
     <span class="eyebrow" id="eyebrow">Notify · Verified results</span>
     <h1 id="title" class="tinted">Notify</h1>
@@ -612,20 +613,24 @@ function niceTicks(min, max, count) {
 }
 
 /* ---------- State ---------- */
-let galaxy = false, ALL = [], PENDING = [], sport = "All", capper = "All", shown = 25, period = "all", cumSel = null;
+let galaxy = false, contact = false, ALL = [], PENDING = [], sport = "All", capper = "All", shown = 25, period = "all", cumSel = null;
 const TEAM = "All";
 const TAB_COLORS = { team: "#D68FBC", caleb: "#39ff88", sammy: "#ff3b5c", quentin: "#ffd60a", footy: "#d65bff" };
 const slug = c => c.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 function capperFromHash() {
   const h = decodeURIComponent(location.hash.slice(1)).toLowerCase();
-  galaxy = h === "galaxy";
+  galaxy = h === "galaxy"; contact = h === "contact";
   const hit = SOURCES.find(s => slug(s.capper) === h);
   return hit ? hit.capper : TEAM;
 }
 function renderTabs() {
   const items = [TEAM, ...CAPPERS];
   const box = document.getElementById("tabs");
-  box.innerHTML = items.map(c => `<a class="tab${c === TEAM ? " team" : ""}" style="--tab-c:${TAB_COLORS[c === TEAM ? "team" : slug(c)] || "var(--accent)"}" role="tab" href="#${c === TEAM ? "team" : slug(c)}" aria-selected="${!galaxy && c === capper}">${c === TEAM ? "Notify" : esc(c)}</a>`).join("") + `<a class="tab gx-tab" style="--tab-c:#AFD7FA" role="tab" href="#galaxy" aria-selected="${galaxy}">Galaxy</a>`;
+  box.innerHTML = items.map(c => `<a class="tab${c === TEAM ? " team" : ""}" style="--tab-c:${TAB_COLORS[c === TEAM ? "team" : slug(c)] || "var(--accent)"}" role="tab" href="#${c === TEAM ? "team" : slug(c)}" aria-selected="${!galaxy && !contact && c === capper}">${c === TEAM ? "Notify" : esc(c)}</a>`).join("") + `<a class="tab gx-tab" style="--tab-c:#AFD7FA" role="tab" href="#galaxy" aria-selected="${galaxy}">Galaxy</a>` +
+    `<a class="tab ct-tab" style="--tab-c:#ff5b1a" role="tab" href="#contact" aria-selected="${contact}">Contact Us</a>`;
+  // On a phone the tab row scrolls sideways; bring the open tab into view.
+  const sel = box.querySelector('[aria-selected="true"]');
+  if (sel && box.scrollWidth > box.clientWidth) box.scrollLeft += sel.getBoundingClientRect().left - box.getBoundingClientRect().left - (box.clientWidth - sel.offsetWidth) / 2;
 }
 // Capper bios shown under the big name on each personal tab, with a link to their own subscription.
 const BIOS = {
@@ -636,6 +641,11 @@ const BIOS = {
 };
 function renderHeader() {
   const team = capper === TEAM;
+  if (contact) {
+    document.documentElement.setAttribute("data-capper", "contact");
+    document.title = "Contact Us · Notify Pick Tracker";
+    return;
+  }
   if (galaxy) {
     document.documentElement.setAttribute("data-capper", "galaxy");
     document.getElementById("title").textContent = "Galaxy";
@@ -836,10 +846,10 @@ const FLOAT_PICK = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
 const FLOAT_TILT = ["-6deg", "5deg", "-3deg", "6deg", "-5deg", "3deg"];
 let floatsFor = null;
 function renderFloats() {
-  const key = (galaxy ? "galaxy" : capper) + ":" + ALL.length;
+  const key = (galaxy ? "galaxy" : contact ? "contact" : capper) + ":" + ALL.length;
   if (floatsFor === key) return;
   floatsFor = key;
-  const list = galaxy ? [] : capper === TEAM ? TEAM_FLOATS : [...new Set(byCapper().map(r => r.sport))].filter(s => SPORT_LOGOS[s]).sort().flatMap(s => SPORT_LOGOS[s]);
+  const list = galaxy || contact ? [] : capper === TEAM ? TEAM_FLOATS : [...new Set(byCapper().map(r => r.sport))].filter(s => SPORT_LOGOS[s]).sort().flatMap(s => SPORT_LOGOS[s]);
   const nLeft = Math.ceil(list.length / 2), n = list.length;
   const tile = (s, i) => {
     const left = i < nLeft, k = left ? i : i - nLeft, per = left ? nLeft : n - nLeft;
@@ -1445,8 +1455,11 @@ function setupGalaxy() {
 function renderAll() {
   const rows = view();
   renderTabs(); renderHeader(); renderFloats(); renderFilters();
-  document.getElementById("dash").hidden = galaxy;
+  document.getElementById("dash").hidden = galaxy || contact;
   document.getElementById("galaxySec").hidden = !galaxy;
+  ["hero", "sportFilters", "dateFilters"].forEach(id => document.getElementById(id).hidden = contact);
+  document.getElementById("ct").hidden = true;
+  if (contact) { gxStop(); showContact(); return; }
   if (galaxy) { renderGalaxy(); return; }
   gxStop();
   renderBoard(rows);
@@ -1460,6 +1473,22 @@ function renderAll() {
   document.getElementById("platNote").textContent = tagged.length < rows.length ? `Bet type is tagged on ${tagged.length} of ${rows.length} picks so far` : "Sportsbooks vs. DFS pick'em apps";
   groupTable("platTable", tagged, "plat", "Bet type", PLAT_NAMES);
   renderLog(rows);
+}
+// The Contact Us tab lives in contact.css and contact.js, loaded the first time someone opens it.
+let ctLoad = null;
+function showContact() {
+  ctLoad = ctLoad || Promise.all([
+    new Promise((ok, no) => { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "contact.css"; l.onload = ok; l.onerror = no; document.head.appendChild(l); }),
+    new Promise((ok, no) => { const s = document.createElement("script"); s.src = "contact.js"; s.onload = ok; s.onerror = no; document.head.appendChild(s); }),
+    new Promise(ok => { const l = document.createElement("link"); l.rel = "stylesheet"; l.onload = l.onerror = ok;
+      l.href = "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400..900&family=JetBrains+Mono:wght@400..700&family=Newsreader:opsz,wght@6..72,400..700&display=swap"; document.head.appendChild(l); setTimeout(ok, 1500); }),
+  ]);
+  ctLoad.then(() => {
+    if (!contact) return;
+    const host = document.getElementById("ct");
+    host.hidden = false;
+    window.NotifyContact.show(host, { rows: ALL, cappers: CAPPERS, bios: BIOS, sportNames: SPORT_NAMES, agg, fmtU, fmtP, fmtDate });
+  }).catch(() => { ctLoad = null; });
 }
 function setupLog() {
   const plats = [...new Set(ALL.map(r => r.plat))].sort();
