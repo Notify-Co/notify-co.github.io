@@ -238,7 +238,7 @@ function markup(d) {
       <svg class="dandelion dandelion--l" aria-hidden="true"><use href="#sym-orbit"/></svg>
       <svg class="dandelion dandelion--r" aria-hidden="true"><use href="#sym-orbit"/></svg>
       <div class="cover-head">
-        <h1 class="cover-title"><span class="mast" style="--len:6" data-mast>notify</span><span class="cover-tag">Four specialists. Every pick graded.</span></h1>
+        <h1 class="cover-title"><span class="mast" style="--len:6" data-mast>notify</span><span class="cover-tag">The Entire Collection</span></h1>
         <a class="cover-mail tlink" href="${TEAM_URL}" ${ext}>dubclub.win/NotifyPicks</a>
       </div>
       <div class="cover-art" data-burst>
@@ -249,8 +249,8 @@ function markup(d) {
           <div class="arch-dots"></div>
           <div class="arch-grain"></div>
         </div>
-        <span class="ray-word ray-word--a" data-fly>Research</span>
-        <span class="ray-word ray-word--b" data-fly>Notify</span>
+        <span class="ray-word ray-word--a" data-fly>Notify</span>
+        <span class="ray-word ray-word--b" data-fly>Picks</span>
         <figure class="print" data-print>
           <div class="ht"><div class="ht-scr"><div class="art" data-art="tally" data-live data-seed="11" data-vb="400 400" role="img" aria-label="A wafer with one square per recent pick: orange for a win, ink for a loss"></div></div></div>
           <figcaption>Last ${k("recent")} picks</figcaption>
@@ -270,12 +270,12 @@ function markup(d) {
   <div class="cover-extra ct-wrap">
     <nav class="cover-aside toc" aria-label="On this tab">
       <ul>
-        <li><a href="#" data-goto="ct-people"><b>Meet the four cappers</b>${chev}<small>The team</small></a></li>
-        <li><a href="#" data-goto="ct-pricing"><b>Premium picks, one link each</b>${chev}<small>Plans</small></a></li>
-        <li><a href="#" data-goto="ct-contact"><b>Where to find us</b>${chev}<small>Contact</small></a></li>
+        <li><a href="#" data-goto="ct-people"><b>In Depth Looks</b>${chev}<small>The team</small></a></li>
+        <li><a href="#" data-goto="ct-pricing"><b>All Sub Pricing</b>${chev}<small>Plans</small></a></li>
+        <li><a href="#" data-goto="ct-contact"><b>Specialist Phonebook</b>${chev}<small>Contact</small></a></li>
       </ul>
     </nav>
-    <p class="cover-no"><b>${C.length}</b><span>specialists, one Notify team</span></p>
+    <p class="cover-no"><b>${C.length}</b><span>specialists, one team</span></p>
   </div>
 </section>
 
@@ -347,36 +347,6 @@ function markup(d) {
   </div>
 </section>
 
-<section class="figures ramp-top" id="ct-figures">
-  <div class="fig-rays" aria-hidden="true"><div></div></div>
-  <div class="ct-wrap">
-    <h2 class="h2 fig-title" data-split>Small team, deep record</h2>
-    <ul class="fig-list">
-      <li class="fig" data-stamp>${big("net")}<span>net units since ${k("since")}, all cappers combined</span></li>
-      <li class="fig" data-stamp>${big("roi")}<span>return on every unit risked</span></li>
-      <li class="fig" data-stamp>${big("picks")}<span>picks graded, wins and losses alike</span></li>
-      <li class="fig" data-stamp>${big("hit")}<span>of decided picks won</span></li>
-    </ul>
-  </div>
-</section>
-
-<section class="process" id="ct-process">
-  <div class="ct-wrap process-grid">
-    <div class="process-head">
-      <h2 class="h2" data-split>From a pick to your phone</h2>
-      <p class="lede" data-reveal>Getting our picks takes a few minutes. Here is how it works.</p>
-      <a class="btn" href="${TEAM_URL}" ${ext} data-reveal><span>Join Notify</span></a>
-    </div>
-    <ol class="proofs" data-proofs>
-      <li class="proof"><span class="proof-bar" aria-hidden="true"></span><p class="meta">Step 1</p><h3 class="h3">Pick your specialist</h3><p>Follow the whole team on Notify, or one capper for the sport you bet most.</p></li>
-      <li class="proof"><span class="proof-bar" aria-hidden="true"></span><p class="meta">Step 2</p><h3 class="h3">Subscribe on their platform</h3><p>Notify and Quentin are on DubClub, Caleb is on Patreon, Sammy is on Winible and Footy is on Whop.</p></li>
-      <li class="proof"><span class="proof-bar" aria-hidden="true"></span><p class="meta">Step 3</p><h3 class="h3">Get notified</h3><p>Picks arrive through the platform you joined, with the odds and the units for each play.</p></li>
-      <li class="proof"><span class="proof-bar" aria-hidden="true"></span><p class="meta">Step 4</p><h3 class="h3">Check the tracker</h3><p>Every pick is graded on this site. The Notify tab has the whole team, and each capper has a tab of their own.</p></li>
-      <li class="proof"><span class="proof-bar" aria-hidden="true"></span><p class="meta">Always</p><h3 class="h3">Bet responsibly</h3><p>A unit is a stake size, not a target. Pick a unit you can afford to lose and keep it the same.</p></li>
-    </ol>
-  </div>
-</section>
-
 <section class="ct-team" id="ct-people">
   <div class="ct-wrap">
     <div class="team-head">
@@ -404,23 +374,6 @@ function markup(d) {
       ${C.map(c => `<li class="quote">${qmark}<blockquote>[A ${c.name} subscriber's review goes here.]</blockquote><p class="quote-by"><b>[Subscriber]</b><span>${c.name} on ${c.plat}</span></p></li>`).join("")}
       <li class="quote">${qmark}<blockquote>[A Notify subscriber's review goes here.]</blockquote><p class="quote-by"><b>[Subscriber]</b><span>Notify on DubClub</span></p></li>
     </ul>
-  </div>
-</section>
-
-<section class="gallery" id="ct-gallery">
-  <div class="ct-wrap">
-    <div class="gallery-head">
-      <h2 class="h2" data-split>On the board this season</h2>
-      <p class="lede" data-reveal>Plates drawn from our real picks. Every image on this tab is drawn in code, not stock.</p>
-    </div>
-    <div class="collage" data-develop>
-      <figure class="g g--a"><div class="ph"><div class="art" data-art="runs" data-live data-seed="101" data-vb="700 560" role="img" aria-label="Running total in units for each capper"></div></div><figcaption>Running total, each capper and the team in orange</figcaption></figure>
-      <figure class="g g--b"><div class="ht"><div class="ht-scr"><div class="art" data-art="sports" data-live data-seed="113" data-vb="560 300" role="img" aria-label="Net units by sport"></div></div></div><figcaption>Net units by sport</figcaption></figure>
-      <figure class="g g--c"><div class="ht ht--red"><div class="ht-scr"><div class="art" data-art="tally" data-live data-seed="127" data-vb="320 300" role="img" aria-label="Recent picks as a wafer of squares"></div></div></div><figcaption>Recent picks, one square each</figcaption></figure>
-      <figure class="g g--d"><div class="ph"><div class="art" data-art="orbit" data-seed="131" data-vb="360 300" role="img" aria-label="A planet with three orbits"></div></div><figcaption>See the Galaxy tab</figcaption></figure>
-      <figure class="g g--e"><div class="ph"><div class="art" data-art="contour" data-seed="137" data-vb="480 400" role="img" aria-label="Contour lines, drawn in code"></div></div><figcaption>Drawn in code</figcaption></figure>
-      <figure class="g g--f"><div class="ht"><div class="ht-scr"><div class="art" data-art="months" data-live data-seed="149" data-vb="820 360" role="img" aria-label="The team's running total as monthly candles"></div></div></div><figcaption>The team's running total, one candle a month</figcaption></figure>
-    </div>
   </div>
 </section>
 
