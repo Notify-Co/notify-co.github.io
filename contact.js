@@ -238,7 +238,7 @@ function markup(d) {
       <svg class="dandelion dandelion--l" aria-hidden="true"><use href="#sym-orbit"/></svg>
       <svg class="dandelion dandelion--r" aria-hidden="true"><use href="#sym-orbit"/></svg>
       <div class="cover-head">
-        <h1 class="cover-title"><span class="mast" style="--len:6" data-mast>notify</span><span class="cover-tag">Four specialists. Every pick graded.</span></h1>
+        <h1 class="cover-title"><span class="mast" style="--len:6" data-mast>notify</span><span class="cover-tag">The Entire Collection</span></h1>
         <a class="cover-mail tlink" href="${TEAM_URL}" ${ext}>dubclub.win/NotifyPicks</a>
       </div>
       <div class="cover-art" data-burst>
@@ -249,8 +249,8 @@ function markup(d) {
           <div class="arch-dots"></div>
           <div class="arch-grain"></div>
         </div>
-        <span class="ray-word ray-word--a" data-fly>Research</span>
-        <span class="ray-word ray-word--b" data-fly>Notify</span>
+        <span class="ray-word ray-word--a" data-fly>Notify</span>
+        <span class="ray-word ray-word--b" data-fly>Picks</span>
         <figure class="print" data-print>
           <div class="ht"><div class="ht-scr"><div class="art" data-art="tally" data-live data-seed="11" data-vb="400 400" role="img" aria-label="A wafer with one square per recent pick: orange for a win, ink for a loss"></div></div></div>
           <figcaption>Last ${k("recent")} picks</figcaption>
@@ -270,12 +270,12 @@ function markup(d) {
   <div class="cover-extra ct-wrap">
     <nav class="cover-aside toc" aria-label="On this tab">
       <ul>
-        <li><a href="#" data-goto="ct-people"><b>Meet the four cappers</b>${chev}<small>The team</small></a></li>
-        <li><a href="#" data-goto="ct-pricing"><b>Premium picks, one link each</b>${chev}<small>Plans</small></a></li>
-        <li><a href="#" data-goto="ct-contact"><b>Where to find us</b>${chev}<small>Contact</small></a></li>
+        <li><a href="#" data-goto="ct-people"><b>In Depth Looks</b>${chev}<small>The team</small></a></li>
+        <li><a href="#" data-goto="ct-pricing"><b>All Sub Pricing</b>${chev}<small>Plans</small></a></li>
+        <li><a href="#" data-goto="ct-contact"><b>Specialist Phonebook</b>${chev}<small>Contact</small></a></li>
       </ul>
     </nav>
-    <p class="cover-no"><b>${C.length}</b><span>specialists, one Notify team</span></p>
+    <p class="cover-no"><b>${C.length}</b><span>specialists, one team</span></p>
   </div>
 </section>
 
